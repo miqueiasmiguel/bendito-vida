@@ -1,17 +1,4 @@
-## ADDED Requirements
-
-### Requirement: Root layout inicializa providers e fontes
-O root layout (`src/app/_layout.tsx`) SHALL carregar a fonte Poppins via `expo-font`, segurar o splash screen com `SplashScreen.preventAutoHideAsync()` até as fontes estarem prontas, e envolver toda a aplicação com `GestureHandlerRootView` e `SafeAreaProvider`.
-
-#### Scenario: Fontes carregam antes da UI aparecer
-- **WHEN** o app inicia
-- **THEN** o splash screen permanece visível até Poppins (Regular e SemiBold) estarem carregadas, e só então esconde o splash e renderiza a tela
-
-#### Scenario: Erro no carregamento de fonte
-- **WHEN** `useFonts` retorna erro
-- **THEN** o app continua (não crasha) e usa fonte de sistema como fallback
-
----
+## MODIFIED Requirements
 
 ### Requirement: Grupos de rota existem e não causam crash
 Os grupos `(auth)`, `(onboarding)` e `(tabs)` SHALL ter `_layout.tsx` próprios que renderizam `<Stack />` ou `<Tabs />` respectivamente, de modo que qualquer navegação para rotas dentro desses grupos não resulte em erro de rota não encontrada. O grupo `(onboarding)` SHALL ter `_layout.tsx` com `<Stack screenOptions={{ headerShown: false }} />`.
@@ -46,6 +33,8 @@ Cada rota sem implementação real (`(auth)/login`, `(auth)/register`, `(tabs)/h
 - **THEN** o componente real do quiz é renderizado (não um placeholder)
 
 ---
+
+## ADDED Requirements
 
 ### Requirement: Welcome Screen navega para o quiz ao tocar "Começar"
 O botão "Começar" na tela Welcome (`/`) SHALL navegar para `/(onboarding)/quiz` usando `router.push` ou `<Link>`.
