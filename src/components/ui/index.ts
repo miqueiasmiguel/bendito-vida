@@ -1,2 +1,2 @@
-// UI components barrel export
-// Add component exports here as they are created
+export { Button } from './Button';
+export type { ButtonProps } from './Button';

@@ -1,98 +1,162 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
+import React, { useEffect } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Button } from '@/components/ui';
+import { colors, spacing, typography } from '@/theme';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+interface DecorativeCircleProps {
+  color: string;
+  delay: number;
+  size: number;
+  top?: number;
+  bottom?: number;
+  left?: number;
+  right?: number;
+}
+
+function DecorativeCircle({ color, delay, size, top, bottom, left, right }: DecorativeCircleProps) {
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(-30);
+
+  useEffect(() => {
+    opacity.value = withDelay(delay, withTiming(1, { duration: 500 }));
+    translateY.value = withDelay(delay, withTiming(0, { duration: 500 }));
+  }, [delay, opacity, translateY]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <Animated.View
+      style={[
+        styles.decorativeCircle,
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: color,
+          top,
+          bottom,
+          left,
+          right,
+        },
+        animStyle,
+      ]}
+    />
   );
 }
 
-export default function HomeScreen() {
+export default function WelcomeScreen() {
+  const logoScale = useSharedValue(0);
+
+  useEffect(() => {
+    logoScale.value = withSpring(1, { stiffness: 100, damping: 15 });
+  }, [logoScale]);
+
+  const logoStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: logoScale.value }],
+  }));
+
+  const handleStart = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/(auth)/register');
+  };
+
+  const handleLogin = () => {
+    router.push('/(auth)/login');
+  };
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <DecorativeCircle color={colors.accent[500]} delay={0} size={120} top={60} right={-20} />
+      <DecorativeCircle color={colors.primary[500]} delay={100} size={80} top={160} left={-10} />
+      <DecorativeCircle color={colors.accent[100]} delay={200} size={60} bottom={200} right={30} />
+      <DecorativeCircle color={colors.primary[100]} delay={300} size={100} bottom={100} left={20} />
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+      <View style={styles.content}>
+        <Animated.View style={[styles.logoContainer, logoStyle]}>
+          <Text style={styles.logoText}>Bendito Vida</Text>
+          <Text style={styles.tagline}>Alimentação saudável com os sabores da Paraíba</Text>
+        </Animated.View>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+        <View style={styles.ctaContainer}>
+          <Button variant="primary" label="Começar" onPress={handleStart} />
+          <TouchableOpacity
+            onPress={handleLogin}
+            style={styles.loginLink}
+            accessibilityRole="link"
+            accessibilityLabel="Já tenho conta"
+          >
+            <Text style={styles.loginText}>Já tenho conta</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  decorativeCircle: {
+    position: 'absolute',
+  },
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    backgroundColor: colors.primary[700],
   },
-  safeArea: {
+  content: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    paddingHorizontal: spacing.xl,
   },
-  title: {
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: spacing.xxl,
+  },
+  logoText: {
+    fontFamily: typography.fontFamily.semiBold,
+    fontSize: typography.fontSize.h1,
+    lineHeight: typography.lineHeight.h1,
+    color: colors.white,
     textAlign: 'center',
+    marginBottom: spacing.sm,
   },
-  code: {
-    textTransform: 'uppercase',
+  tagline: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.fontSize.body,
+    lineHeight: typography.lineHeight.body,
+    color: colors.white,
+    textAlign: 'center',
+    opacity: 0.9,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  ctaContainer: {
+    width: '100%',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  loginLink: {
+    minHeight: 44,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loginText: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.fontSize.body,
+    color: colors.white,
+    textDecorationLine: 'underline',
   },
 });
