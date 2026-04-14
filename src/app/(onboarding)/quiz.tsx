@@ -115,6 +115,7 @@ export default function QuizScreen() {
         <View style={styles.progressWrapper}>
           <QuizProgressBar current={step + 1} total={TOTAL} />
         </View>
+        <View style={styles.headerSpacer} />
       </View>
 
       <FlatList
@@ -144,16 +145,28 @@ export default function QuizScreen() {
         style={styles.flatList}
       />
 
-      <Animated.View
-        style={[styles.buttonContainer, buttonAnimStyle]}
-        pointerEvents={hasSelection ? 'auto' : 'none'}
-      >
-        <Button
-          variant="primary"
-          label={isLastStep ? 'Concluir' : 'Próximo'}
-          onPress={handleNext}
-        />
-      </Animated.View>
+      <View style={styles.actionArea}>
+        {step > 0 && (
+          <View style={styles.buttonFlex}>
+            <Button
+              variant="secondary"
+              label="Voltar"
+              onPress={handleBack}
+              accessibilityLabel="Voltar para a pergunta anterior"
+            />
+          </View>
+        )}
+        <Animated.View
+          style={[styles.buttonFlex, buttonAnimStyle]}
+          pointerEvents={hasSelection ? 'auto' : 'none'}
+        >
+          <Button
+            variant="primary"
+            label={isLastStep ? 'Concluir' : 'Próximo'}
+            onPress={handleNext}
+          />
+        </Animated.View>
+      </View>
     </SafeAreaView>
   );
 }
@@ -184,15 +197,20 @@ const styles = StyleSheet.create({
   optionsList: {
     gap: spacing.xs,
   },
-  buttonContainer: {
+  actionArea: {
+    flexDirection: 'row',
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
     paddingBottom: spacing.lg,
+    gap: spacing.md,
+  },
+  buttonFlex: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: spacing.sm,
+    paddingHorizontal: spacing.sm,
   },
   backButton: {
     width: 44,
@@ -202,5 +220,8 @@ const styles = StyleSheet.create({
   },
   progressWrapper: {
     flex: 1,
+  },
+  headerSpacer: {
+    width: 44,
   },
 });
