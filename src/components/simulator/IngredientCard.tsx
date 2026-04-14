@@ -1,3 +1,4 @@
+import { Leaf } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -21,8 +22,8 @@ export function IngredientCard({ ingredient, selected, onPress }: IngredientCard
       accessibilityState={{ selected }}
     >
       {ingredient.isParaibano && (
-        <View style={styles.badge} accessibilityLabel="Ingrediente paraibano">
-          <Text style={styles.badgeText}>Paraibano</Text>
+        <View style={styles.seal} accessibilityLabel="Ingrediente paraibano">
+          <Leaf size={10} color={colors.neutral[50]} strokeWidth={2} />
         </View>
       )}
       <View style={[styles.colorDot, { backgroundColor: ingredient.color }]} />
@@ -50,24 +51,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 2,
+    overflow: 'visible',
   },
   cardSelected: {
     borderColor: colors.primary[700],
     backgroundColor: colors.primary[100],
   },
-  badge: {
-    backgroundColor: colors.primary[100],
-    borderRadius: radii.badge,
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 2,
-    marginBottom: spacing.xs,
-    alignSelf: 'stretch',
+  seal: {
+    position: 'absolute',
+    top: -6,
+    left: -6,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.primary[700],
+    borderWidth: 1.5,
+    borderColor: colors.white,
     alignItems: 'center',
-  },
-  badgeText: {
-    fontFamily: typography.fontFamily.semiBold,
-    fontSize: typography.fontSize.small,
-    color: colors.primary[700],
+    justifyContent: 'center',
+    zIndex: 1,
   },
   colorDot: {
     width: 28,

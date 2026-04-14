@@ -35,18 +35,19 @@ describe('IngredientCard', () => {
     expect(getByText('Gergelim')).toBeTruthy();
   });
 
-  it('shows Paraibano badge for paraiban ingredients', () => {
-    const { getByText } = render(
+  it('shows paraibano seal icon for paraiban ingredients', () => {
+    const { getByLabelText, queryByText } = render(
       <IngredientCard ingredient={mockIngredient} selected={false} onPress={jest.fn()} />,
     );
-    expect(getByText('Paraibano')).toBeTruthy();
+    expect(getByLabelText('Ingrediente paraibano')).toBeTruthy();
+    expect(queryByText('Paraibano')).toBeNull();
   });
 
-  it('hides Paraibano badge for non-paraiban ingredients', () => {
-    const { queryByText } = render(
+  it('hides paraibano seal for non-paraiban ingredients', () => {
+    const { queryByLabelText } = render(
       <IngredientCard ingredient={nonParaibanoIngredient} selected={false} onPress={jest.fn()} />,
     );
-    expect(queryByText('Paraibano')).toBeNull();
+    expect(queryByLabelText('Ingrediente paraibano')).toBeNull();
   });
 
   it('calls onPress with ingredient when tapped', () => {
