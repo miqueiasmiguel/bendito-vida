@@ -145,6 +145,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
     paddingBottom: spacing.md,
   },
   ctaContainer: {
