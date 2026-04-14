@@ -6,6 +6,21 @@ import type { NutrientTag } from '@/data/quiz-questions';
 
 import { BioactiveMap } from '../BioactiveMap';
 
+// BioactiveMap now renders BioactiveRadarChart which uses react-native-svg.
+// Mock SVG so Text labels render as native Text (findable by getByText).
+jest.mock('react-native-svg', () => {
+  const React = require('react');
+  const { View, Text } = require('react-native');
+  return {
+    Svg: ({ children }: { children: React.ReactNode }) => React.createElement(View, null, children),
+    Polygon: () => null,
+    Circle: () => null,
+    Line: () => null,
+    Text: ({ children }: { children: React.ReactNode }) =>
+      React.createElement(Text, null, children),
+  };
+});
+
 const paraibanoIngredient: Ingredient = {
   id: 'gergelim',
   name: 'Gergelim',
@@ -44,10 +59,11 @@ describe('BioactiveMap', () => {
     expect(getByText('Fazer Quiz →')).toBeTruthy();
   });
 
-  it('renders nutrient labels when nutrients provided', () => {
+  it('renders radar chart labels when nutrients provided', () => {
     const { getByText } = render(
       <BioactiveMap topNutrients={nutrients} recommendedIngredients={[]} />,
     );
+    // Short labels as mapped by NUTRIENT_SHORT
     expect(getByText('Ômega-3')).toBeTruthy();
     expect(getByText('Fibras')).toBeTruthy();
     expect(getByText('Cálcio')).toBeTruthy();
@@ -81,13 +97,21 @@ describe('BioactiveMap', () => {
     expect(queryByText('Paraibano')).toBeNull();
   });
 
-  it('displays at most 3 nutrients even when more are given', () => {
-    const manyNutrients: NutrientTag[] = ['omega3', 'fibra', 'calcio', 'ferro', 'zinco'];
+  it('displays at most 6 nutrients even when more are given', () => {
+    const manyNutrients: NutrientTag[] = [
+      'omega3',
+      'fibra',
+      'calcio',
+      'ferro',
+      'zinco',
+      'selenio',
+      'cromo',
+    ];
     const { queryByText } = render(
       <BioactiveMap topNutrients={manyNutrients} recommendedIngredients={[]} />,
     );
-    expect(queryByText('Ferro')).toBeNull();
-    expect(queryByText('Zinco')).toBeNull();
+    // 7th nutrient (index 6 = 'cromo') should not be shown
+    expect(queryByText('Cromo')).toBeNull();
   });
 
   it('displays at most 5 ingredients even when more are given', () => {

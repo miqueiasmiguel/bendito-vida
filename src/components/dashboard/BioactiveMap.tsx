@@ -5,25 +5,35 @@ import type { Ingredient } from '@/data/ingredients';
 import type { NutrientTag } from '@/data/quiz-questions';
 import { colors, radii, spacing, typography } from '@/theme';
 
-// Maps each nutrient tag to a display label and bar color
-const NUTRIENT_META: Record<NutrientTag, { label: string; color: string }> = {
-  'vitamina-c': { label: 'Vitamina C', color: colors.semantic.warning },
-  'vitamina-b12': { label: 'Vitamina B12', color: colors.semantic.info },
-  'vitamina-e': { label: 'Vitamina E', color: colors.accent[500] },
-  omega3: { label: 'Ômega-3', color: colors.semantic.info },
-  ferro: { label: 'Ferro', color: colors.semantic.error },
-  calcio: { label: 'Cálcio', color: colors.primary[500] },
-  magnesio: { label: 'Magnésio', color: colors.primary[700] },
-  zinco: { label: 'Zinco', color: colors.neutral[700] },
-  selenio: { label: 'Selênio', color: colors.accent[500] },
-  fibra: { label: 'Fibras', color: colors.semantic.success },
-  proteina: { label: 'Proteína', color: colors.primary[500] },
-  prebiotico: { label: 'Prebiótico', color: colors.semantic.success },
-  cromo: { label: 'Cromo', color: colors.neutral[400] },
+import { BioactiveRadarChart } from './BioactiveRadarChart';
+import type { RadarDataPoint } from './BioactiveRadarChart';
+
+const NUTRIENT_SHORT: Record<NutrientTag, string> = {
+  'vitamina-c': 'Vit. C',
+  'vitamina-b12': 'Vit. B12',
+  'vitamina-e': 'Vit. E',
+  omega3: 'Ômega-3',
+  ferro: 'Ferro',
+  calcio: 'Cálcio',
+  magnesio: 'Magnésio',
+  zinco: 'Zinco',
+  selenio: 'Selênio',
+  fibra: 'Fibras',
+  proteina: 'Proteína',
+  prebiotico: 'Prebiótic',
+  cromo: 'Cromo',
 };
 
-// Fixed representative fill levels (visual only — no exact quantity data)
-const FILL_LEVELS = [0.75, 0.6, 0.5];
+// Representative fill levels (visual only — no exact quantity data)
+const RADAR_VALUES = [100, 82, 68, 55, 44, 35];
+
+function buildRadarData(nutrients: NutrientTag[]): RadarDataPoint[] {
+  return nutrients.slice(0, 6).map((tag, i) => ({
+    label: NUTRIENT_SHORT[tag],
+    value: RADAR_VALUES[i] ?? 35,
+    maxValue: 100,
+  }));
+}
 
 export interface BioactiveMapProps {
   topNutrients: NutrientTag[];
@@ -57,28 +67,15 @@ export function BioactiveMap({
     );
   }
 
-  const displayedNutrients = topNutrients.slice(0, 3);
+  const radarData = buildRadarData(topNutrients);
   const displayedIngredients = recommendedIngredients.slice(0, 5);
 
   return (
     <View style={styles.card} accessibilityLabel="Mapa Bioativo">
       <Text style={styles.cardTitle}>Mapa Bioativo</Text>
 
-      <View style={styles.nutrientsSection}>
-        {displayedNutrients.map((tag, index) => {
-          const meta = NUTRIENT_META[tag];
-          const fill = FILL_LEVELS[index] ?? 0.5;
-          return (
-            <View key={tag} style={styles.nutrientRow} accessibilityLabel={meta.label}>
-              <Text style={styles.nutrientLabel}>{meta.label}</Text>
-              <View style={styles.barTrack}>
-                <View
-                  style={[styles.barFill, { width: `${fill * 100}%`, backgroundColor: meta.color }]}
-                />
-              </View>
-            </View>
-          );
-        })}
+      <View style={styles.chartSection}>
+        <BioactiveRadarChart data={radarData} />
       </View>
 
       <Text style={styles.sectionSubtitle}>Ingredientes recomendados</Text>
@@ -116,27 +113,9 @@ const styles = StyleSheet.create({
     color: colors.neutral[900],
     marginBottom: spacing.md,
   },
-  nutrientsSection: {
-    gap: spacing.sm,
+  chartSection: {
+    alignItems: 'center',
     marginBottom: spacing.md,
-  },
-  nutrientRow: {
-    gap: spacing.xs,
-  },
-  nutrientLabel: {
-    fontFamily: typography.fontFamily.semiBold,
-    fontSize: typography.fontSize.caption,
-    color: colors.neutral[700],
-  },
-  barTrack: {
-    height: 8,
-    backgroundColor: colors.neutral[200],
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  barFill: {
-    height: '100%',
-    borderRadius: 4,
   },
   sectionSubtitle: {
     fontFamily: typography.fontFamily.semiBold,

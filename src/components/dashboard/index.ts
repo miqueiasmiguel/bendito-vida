@@ -1,5 +1,7 @@
 export { BioactiveMap } from './BioactiveMap';
 export type { BioactiveMapProps } from './BioactiveMap';
+export { BioactiveRadarChart } from './BioactiveRadarChart';
+export type { BioactiveRadarChartProps, RadarDataPoint } from './BioactiveRadarChart';
 export { DailyTip } from './DailyTip';
 export type { DailyTipProps } from './DailyTip';
 export { EvolutionChart } from './EvolutionChart';
