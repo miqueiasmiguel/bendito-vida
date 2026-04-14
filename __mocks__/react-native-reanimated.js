@@ -34,7 +34,7 @@ module.exports = {
   withTiming,
   withSpring,
   withDelay,
-  Easing: { out: (fn) => fn, linear: (t) => t, ease: (t) => t },
+  Easing: { out: (fn) => fn, linear: (t) => t, ease: (t) => t, cubic: (t) => t * t * t },
   runOnJS: (fn) => fn,
   runOnUI: (fn) => fn,
   cancelAnimation: () => {},

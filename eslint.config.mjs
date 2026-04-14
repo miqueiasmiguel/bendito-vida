@@ -33,6 +33,13 @@ export default tseslint.config(
     },
   },
   {
+    // jest.mock() factories must use require() — import is not allowed in them
+    files: ['**/__tests__/**/*.{ts,tsx}', '**/*.test.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+  {
     ignores: [
       'node_modules/',
       'android/',
