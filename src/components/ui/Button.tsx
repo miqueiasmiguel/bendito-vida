@@ -8,9 +8,16 @@ export interface ButtonProps {
   label: string;
   onPress: () => void;
   disabled?: boolean;
+  accessibilityLabel?: string;
 }
 
-export function Button({ variant, label, onPress, disabled = false }: ButtonProps) {
+export function Button({
+  variant,
+  label,
+  onPress,
+  disabled = false,
+  accessibilityLabel,
+}: ButtonProps) {
   return (
     <TouchableOpacity
       style={[
@@ -21,7 +28,7 @@ export function Button({ variant, label, onPress, disabled = false }: ButtonProp
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel ?? label}
       activeOpacity={0.8}
     >
       <Text
