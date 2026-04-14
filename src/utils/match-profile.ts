@@ -50,7 +50,7 @@ export function matchProfile(answers: Record<string, string[]>): NutritionProfil
     return NUTRIENT_PRECEDENCE.indexOf(a) - NUTRIENT_PRECEDENCE.indexOf(b);
   });
 
-  const topNutrients = ranked.slice(0, 3);
+  const topNutrients = ranked.slice(0, 6);
 
   // Find ingredients that match any top nutrient (deduplicated, sorted by coverage)
   const seen = new Set<string>();

@@ -42,7 +42,7 @@ describe('matchProfile', () => {
     expect(result.topNutrients).toContain('proteina');
   });
 
-  it('returns at most 3 top nutrients', () => {
+  it('returns at most 6 top nutrients', () => {
     const result = matchProfile({
       q1: ['q1-energia'],
       q2: ['q2-cansado'],
@@ -50,7 +50,7 @@ describe('matchProfile', () => {
       q4: ['q4-nenhuma'],
       q5: ['q5-medico'],
     });
-    expect(result.topNutrients.length).toBeLessThanOrEqual(3);
+    expect(result.topNutrients.length).toBeLessThanOrEqual(6);
   });
 
   it('resolves tiebreaks by nutrient precedence (vitamins before minerals)', () => {
