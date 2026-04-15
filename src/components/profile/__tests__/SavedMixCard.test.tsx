@@ -2,15 +2,15 @@ import { render } from '@testing-library/react-native';
 import React from 'react';
 
 import { SavedMixCard } from '../SavedMixCard';
-import type { SavedMix } from '@/types/profile';
+import type { Mix } from '@/types/database';
 
-const baseMix: SavedMix = {
+const baseMix: Mix = {
   id: 'mix-1',
+  user_id: 'user-1',
   name: 'Mix Energético',
-  createdAt: '2026-04-10T12:00:00Z',
-  ingredientIds: ['gergelim', 'feijao-verde'],
-  calories: 200,
-  proteins: 10,
+  created_at: '2026-04-10T12:00:00Z',
+  ingredients: ['gergelim', 'feijao-verde'],
+  nutrition: { calories: 200, fiber: 5, protein: 10, omega3: 1 },
 };
 
 describe('SavedMixCard', () => {
@@ -31,9 +31,9 @@ describe('SavedMixCard', () => {
   });
 
   it('trunca com "+N" quando há mais de 3 ingredientes', () => {
-    const mixWith5: SavedMix = {
+    const mixWith5: Mix = {
       ...baseMix,
-      ingredientIds: ['gergelim', 'feijao-verde', 'amendoim', 'linhaça', 'chia'],
+      ingredients: ['gergelim', 'feijao-verde', 'amendoim', 'linhaça', 'chia'],
     };
     const { getByText } = render(<SavedMixCard mix={mixWith5} />);
     expect(getByText(/\+2/)).toBeTruthy();

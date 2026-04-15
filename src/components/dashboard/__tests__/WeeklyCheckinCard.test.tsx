@@ -6,7 +6,7 @@ import { WeeklyCheckinCard } from '../WeeklyCheckinCard';
 describe('WeeklyCheckinCard — compact mode', () => {
   it('renders the teaser with "Responder" button', () => {
     const { getByText } = render(<WeeklyCheckinCard compact />);
-    expect(getByText('Check-in da semana')).toBeTruthy();
+    expect(getByText('Check-in de hoje')).toBeTruthy();
     expect(getByText('Responder')).toBeTruthy();
   });
 
@@ -22,6 +22,15 @@ describe('WeeklyCheckinCard — compact mode', () => {
     expect(queryByText('Disposição')).toBeNull();
     expect(queryByText('Sono')).toBeNull();
     expect(queryByText('Foco')).toBeNull();
+  });
+
+  it('shows "Feito hoje ✓" and hides "Responder" when existingCheckin is provided', () => {
+    const existingCheckin = { energyScore: 4, sleepScore: 3, focusScore: 5 };
+    const { getByText, queryByText } = render(
+      <WeeklyCheckinCard compact existingCheckin={existingCheckin} />,
+    );
+    expect(getByText('Feito hoje ✓')).toBeTruthy();
+    expect(queryByText('Responder')).toBeNull();
   });
 });
 
@@ -76,7 +85,7 @@ describe('WeeklyCheckinCard — read-only mode (existingCheckin)', () => {
 
   it('shows the done confirmation message', () => {
     const { getByText } = render(<WeeklyCheckinCard existingCheckin={existingCheckin} />);
-    expect(getByText(/Check-in da semana realizado/)).toBeTruthy();
+    expect(getByText(/Check-in de hoje realizado/)).toBeTruthy();
   });
 
   it('does not render the submit button', () => {

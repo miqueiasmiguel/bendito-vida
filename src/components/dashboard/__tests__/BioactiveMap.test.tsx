@@ -13,6 +13,7 @@ jest.mock('react-native-svg', () => {
   const { View, Text } = require('react-native');
   return {
     Svg: ({ children }: { children: React.ReactNode }) => React.createElement(View, null, children),
+    Path: () => null,
     Polygon: () => null,
     Circle: () => null,
     Line: () => null,
@@ -80,21 +81,21 @@ describe('BioactiveMap', () => {
     expect(getByText('Chia')).toBeTruthy();
   });
 
-  it('shows Paraibano badge for paraiban ingredients', () => {
-    const { getAllByText } = render(
+  it('shows leaf seal for paraiban ingredients', () => {
+    const { getAllByLabelText } = render(
       <BioactiveMap
         topNutrients={nutrients}
         recommendedIngredients={[paraibanoIngredient, nonParaibanoIngredient]}
       />,
     );
-    expect(getAllByText('Paraibano')).toHaveLength(1);
+    expect(getAllByLabelText('Ingrediente paraibano')).toHaveLength(1);
   });
 
-  it('shows no Paraibano badge for non-paraiban ingredients', () => {
-    const { queryByText } = render(
+  it('shows no leaf seal for non-paraiban ingredients', () => {
+    const { queryByLabelText } = render(
       <BioactiveMap topNutrients={nutrients} recommendedIngredients={[nonParaibanoIngredient]} />,
     );
-    expect(queryByText('Paraibano')).toBeNull();
+    expect(queryByLabelText('Ingrediente paraibano')).toBeNull();
   });
 
   it('displays at most 6 nutrients even when more are given', () => {

@@ -1,18 +1,27 @@
 import { render } from '@testing-library/react-native';
 import React from 'react';
 
-import type { Checkin } from '@/stores/useProgressStore';
+import type { DailyCheckin } from '@/types/database';
 
 import { InsightBanner } from '../InsightBanner';
 
-const makeCheckin = (weekNo: number, energy: number, sleep: number, focus: number): Checkin => ({
-  id: `w${weekNo}`,
-  week: `2026-W${String(weekNo).padStart(2, '0')}`,
-  energyScore: energy,
-  sleepScore: sleep,
-  focusScore: focus,
-  createdAt: weekNo * 1000,
-});
+const makeCheckin = (
+  dayOffset: number,
+  energy: number,
+  sleep: number,
+  focus: number,
+): DailyCheckin => {
+  const d = new Date(2026, 3, 1 + dayOffset); // April 2026
+  return {
+    id: `day-${dayOffset}`,
+    user_id: 'user-1',
+    date: d.toLocaleDateString('en-CA'),
+    energy_score: energy,
+    sleep_score: sleep,
+    focus_score: focus,
+    created_at: d.toISOString(),
+  };
+};
 
 describe('InsightBanner', () => {
   it('shows neutral message when there is only one check-in', () => {

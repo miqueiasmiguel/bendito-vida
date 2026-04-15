@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react-native';
 import React from 'react';
 
-import type { Checkin } from '@/stores/useProgressStore';
+import type { DailyCheckin } from '@/types/database';
 
 import { EvolutionChart } from '../EvolutionChart';
 
@@ -11,14 +11,19 @@ jest.mock('react-native-chart-kit', () => ({
   LineChart: jest.fn(() => null),
 }));
 
-const makeCheckin = (weekNo: number, scores = { e: 4, s: 3, f: 5 }): Checkin => ({
-  id: `week-${weekNo}`,
-  week: `2026-W${String(weekNo).padStart(2, '0')}`,
-  energyScore: scores.e,
-  sleepScore: scores.s,
-  focusScore: scores.f,
-  createdAt: weekNo * 1000,
-});
+const makeCheckin = (dayOffset: number, scores = { e: 4, s: 3, f: 5 }): DailyCheckin => {
+  const d = new Date(2026, 3, 1 + dayOffset); // April 2026
+  const dateStr = d.toLocaleDateString('en-CA'); // YYYY-MM-DD
+  return {
+    id: `day-${dayOffset}`,
+    user_id: 'user-1',
+    date: dateStr,
+    energy_score: scores.e,
+    sleep_score: scores.s,
+    focus_score: scores.f,
+    created_at: d.toISOString(),
+  };
+};
 
 describe('EvolutionChart', () => {
   it('renders onboarding banner when no check-ins exist', () => {
@@ -27,24 +32,24 @@ describe('EvolutionChart', () => {
   });
 
   it('renders the section title (chart area) when check-ins exist', () => {
-    const { getByText } = render(<EvolutionChart checkins={[makeCheckin(15)]} />);
-    expect(getByText('Evolução semanal')).toBeTruthy();
+    const { getByText } = render(<EvolutionChart checkins={[makeCheckin(0)]} />);
+    expect(getByText('Evolução diária')).toBeTruthy();
   });
 
   it('renders the section title when check-ins exist', () => {
-    const { getByText } = render(<EvolutionChart checkins={[makeCheckin(15), makeCheckin(16)]} />);
-    expect(getByText('Evolução semanal')).toBeTruthy();
+    const { getByText } = render(<EvolutionChart checkins={[makeCheckin(0), makeCheckin(1)]} />);
+    expect(getByText('Evolução diária')).toBeTruthy();
   });
 
   it('does not show the empty banner when check-ins are provided', () => {
-    const { queryByText } = render(<EvolutionChart checkins={[makeCheckin(15)]} />);
+    const { queryByText } = render(<EvolutionChart checkins={[makeCheckin(0)]} />);
     expect(queryByText(/Faça seu primeiro check-in/)).toBeNull();
   });
 
-  it('limits chart to last 8 weeks even with more data (no throw)', () => {
-    const many = Array.from({ length: 12 }, (_, i) => makeCheckin(i + 1));
+  it('limits chart to last 30 entries even with more data (no throw)', () => {
+    const many = Array.from({ length: 35 }, (_, i) => makeCheckin(i));
     const { queryByText, getByText } = render(<EvolutionChart checkins={many} />);
     expect(queryByText(/Faça seu primeiro check-in/)).toBeNull();
-    expect(getByText('Evolução semanal')).toBeTruthy();
+    expect(getByText('Evolução diária')).toBeTruthy();
   });
 });

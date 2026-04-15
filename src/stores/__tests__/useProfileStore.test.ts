@@ -16,11 +16,11 @@ const mockFrom = supabase.from as jest.Mock;
 function makeMixRow(overrides: Record<string, unknown> = {}) {
   return {
     id: 'mix-1',
+    user_id: 'user-1',
     name: 'Meu Mix',
     created_at: '2026-04-10T12:00:00Z',
-    ingredient_ids: ['gergelim', 'feijao-verde'],
-    calories: 200,
-    proteins: 10,
+    ingredients: ['gergelim', 'feijao-verde'],
+    nutrition: { calories: 200, fiber: 5, protein: 10, omega3: 1 },
     ...overrides,
   };
 }
@@ -55,8 +55,10 @@ describe('useProfileStore', () => {
       const profileData = {
         id: 'user-1',
         name: 'Maria Silva',
-        email: 'maria@example.com',
+        onboarding_completed: true,
+        bioactive_profile: null,
         created_at: '2025-01-15T00:00:00Z',
+        updated_at: '2025-01-15T00:00:00Z',
       };
 
       const profileChain = buildChain({ data: profileData, error: null });
@@ -79,11 +81,11 @@ describe('useProfileStore', () => {
       expect(result.current.profile).toMatchObject({
         id: 'user-1',
         name: 'Maria Silva',
-        email: 'maria@example.com',
+        onboarding_completed: true,
       });
       expect(result.current.mixes).toHaveLength(1);
       expect(result.current.mixes[0].name).toBe('Meu Mix');
-      expect(result.current.mixes[0].ingredientIds).toEqual(['gergelim', 'feijao-verde']);
+      expect(result.current.mixes[0].ingredients).toEqual(['gergelim', 'feijao-verde']);
     });
   });
 

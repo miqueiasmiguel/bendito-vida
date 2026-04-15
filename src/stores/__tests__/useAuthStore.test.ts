@@ -2,6 +2,13 @@ import { act, renderHook } from '@testing-library/react-native';
 
 import { useAuthStore } from '../useAuthStore';
 
+// Mock useQuizStore (imported by useAuthStore for profile hydration)
+jest.mock('@/stores/useQuizStore', () => ({
+  useQuizStore: {
+    getState: jest.fn(() => ({ setProfile: jest.fn() })),
+  },
+}));
+
 // Mock supabase
 jest.mock('@/lib/supabase', () => ({
   supabase: {
@@ -167,7 +174,12 @@ describe('useAuthStore', () => {
   });
 
   describe('markOnboardingComplete', () => {
-    it('upserts onboarding_completed=true and sets onboardingCompleted in store', async () => {
+    const dummyProfile = {
+      topNutrients: ['fibra', 'proteina', 'ferro'],
+      suggestedIngredients: [],
+    };
+
+    it('upserts onboarding_completed=true and bioactive_profile, sets onboardingCompleted in store', async () => {
       const mockUpsert = jest.fn().mockResolvedValue({ data: null, error: null });
       supabase.from.mockReturnValue({ upsert: mockUpsert });
 
@@ -181,11 +193,15 @@ describe('useAuthStore', () => {
       const { result } = renderHook(() => useAuthStore());
 
       await act(async () => {
-        await result.current.markOnboardingComplete();
+        await result.current.markOnboardingComplete(dummyProfile);
       });
 
       expect(supabase.from).toHaveBeenCalledWith('profiles');
-      expect(mockUpsert).toHaveBeenCalledWith({ id: 'user-123', onboarding_completed: true });
+      expect(mockUpsert).toHaveBeenCalledWith({
+        id: 'user-123',
+        onboarding_completed: true,
+        bioactive_profile: dummyProfile,
+      });
       expect(result.current.onboardingCompleted).toBe(true);
     });
 
@@ -193,7 +209,7 @@ describe('useAuthStore', () => {
       const { result } = renderHook(() => useAuthStore());
 
       await act(async () => {
-        await result.current.markOnboardingComplete();
+        await result.current.markOnboardingComplete(dummyProfile);
       });
 
       expect(supabase.from).not.toHaveBeenCalled();
