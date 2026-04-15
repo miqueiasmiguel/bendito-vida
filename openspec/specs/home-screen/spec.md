@@ -31,15 +31,15 @@ A tela Home SHALL exibir um card "Mapa Bioativo" contendo até 6 nutrientes prio
 ---
 
 ### Requirement: Ingredientes recomendados no Mapa Bioativo
-O Mapa Bioativo SHALL exibir 3 a 5 ingredientes recomendados derivados das tags do `nutritionProfile`, ordenados por número de tags em comum. Ingredientes com `isParaibano: true` SHALL exibir badge "Paraibano".
+O Mapa Bioativo SHALL exibir 3 a 5 ingredientes recomendados derivados das tags do `nutritionProfile`, ordenados por número de tags em comum. Ingredientes com `isParaibano: true` SHALL exibir um selo circular verde com ícone de folha (`<Leaf />` Lucide, size=10, strokeWidth=2, cor `neutral-50`) posicionado no canto superior direito do chip, idêntico ao padrão do `IngredientCard` no Meu Mix.
 
 #### Scenario: Ingredientes com match de tags
 - **WHEN** o perfil possui tags que coincidem com ingredientes do catálogo
-- **THEN** são exibidos até 5 ingredientes com nome, ícone e badge condicional
+- **THEN** são exibidos até 5 ingredientes com nome e selo condicional
 
 #### Scenario: Ingrediente paraibano na lista
 - **WHEN** um ingrediente recomendado tem `isParaibano: true`
-- **THEN** um badge verde com texto "Paraibano" é exibido junto ao nome
+- **THEN** um selo circular verde com ícone `<Leaf />` é exibido no canto superior direito do chip (sem texto "Paraibano", consistente com o padrão do Meu Mix)
 
 ---
 
@@ -52,18 +52,22 @@ A tela Home SHALL exibir um botão primário "Montar meu Mix" que navega para `/
 
 ---
 
-### Requirement: Card de Check-in semanal (placeholder)
-A tela Home SHALL exibir um card "Check-in da semana" com UI estática indicando que o check-in está disponível. A lógica real de submissão pertence à Tela 6.
-
-#### Scenario: Card visível na Home
-- **WHEN** tela Home é exibida
-- **THEN** card "Check-in da semana" aparece com CTA "Responder" (sem navegação funcional nesta iteração)
-
----
-
 ### Requirement: Dica do dia
 A tela Home SHALL exibir uma "Dica do dia" com nome e benefício de um ingrediente selecionado deterministicamente pelo dia da semana (`Date.getDay() % ingredients.length`).
 
 #### Scenario: Dica exibida
 - **WHEN** tela Home é renderizada
 - **THEN** um card pequeno exibe o nome e o `benefit` do ingrediente selecionado
+
+---
+
+### Requirement: Perfil bioativo reidratado do Supabase na inicialização
+Ao inicializar o app com um usuário autenticado que já completou o quiz, o sistema SHALL recuperar `bioactive_profile` da tabela `profiles` e popular `useQuizStore.nutritionProfile` **antes** de renderizar a tela Home. Se `bioactive_profile` for `null` (usuário nunca completou o quiz ou fez quiz antes desta feature), o Mapa Bioativo SHALL exibir o estado vazio ("Complete o quiz para ver seu Mapa Bioativo").
+
+#### Scenario: App reinicia com usuário que completou o quiz
+- **WHEN** o usuário fecha e reabre o app estando autenticado e `profiles.bioactive_profile` é não-nulo
+- **THEN** a tela Home exibe o Mapa Bioativo com os nutrientes e ingredientes do perfil salvo, sem precisar refazer o quiz
+
+#### Scenario: App reinicia com usuário sem perfil salvo
+- **WHEN** o usuário fecha e reabre o app estando autenticado e `profiles.bioactive_profile` é `null`
+- **THEN** a tela Home exibe o estado vazio do Mapa Bioativo com botão "Fazer Quiz"
