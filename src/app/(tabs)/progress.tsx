@@ -4,16 +4,33 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { EvolutionChart } from '@/components/dashboard/EvolutionChart';
 import { InsightBanner } from '@/components/dashboard/InsightBanner';
+import type { CheckinValues } from '@/components/dashboard/WeeklyCheckinCard';
 import { WeeklyCheckinCard } from '@/components/dashboard/WeeklyCheckinCard';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { useProgressStore } from '@/stores/useProgressStore';
 import { colors, spacing, typography } from '@/theme';
 
 export default function ProgressScreen() {
+  const user = useAuthStore((s) => s.user);
   const checkins = useProgressStore((s) => s.checkins);
   const addCheckin = useProgressStore((s) => s.addCheckin);
-  const getCurrentWeekCheckin = useProgressStore((s) => s.getCurrentWeekCheckin);
 
-  const currentCheckin = getCurrentWeekCheckin();
+  const today = new Date().toLocaleDateString('en-CA');
+  const currentCheckin = checkins.find((c) => c.date === today);
+
+  const existingCheckin: CheckinValues | undefined = currentCheckin
+    ? {
+        energyScore: currentCheckin.energy_score,
+        sleepScore: currentCheckin.sleep_score,
+        focusScore: currentCheckin.focus_score,
+      }
+    : undefined;
+
+  const handleSubmit = (values: CheckinValues) => {
+    if (user) {
+      void addCheckin(user.id, values);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -28,7 +45,7 @@ export default function ProgressScreen() {
         <Text style={styles.subtitle}>Acompanhe como você está se sentindo.</Text>
 
         <View style={styles.section}>
-          <WeeklyCheckinCard existingCheckin={currentCheckin} onSubmit={addCheckin} />
+          <WeeklyCheckinCard existingCheckin={existingCheckin} onSubmit={handleSubmit} />
         </View>
 
         <View style={styles.section}>

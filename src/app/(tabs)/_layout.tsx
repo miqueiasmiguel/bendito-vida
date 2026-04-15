@@ -1,10 +1,21 @@
 import { Tabs } from 'expo-router';
 import { FlaskConical, Home, TrendingUp, User } from 'lucide-react-native';
-import React from 'react';
+import React, { useEffect } from 'react';
 
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useProgressStore } from '@/stores/useProgressStore';
 import { colors } from '@/theme';
 
 export default function TabsLayout() {
+  const user = useAuthStore((s) => s.user);
+  const fetchCheckins = useProgressStore((s) => s.fetchCheckins);
+
+  useEffect(() => {
+    if (user) {
+      void fetchCheckins(user.id);
+    }
+  }, [user, fetchCheckins]);
+
   return (
     <Tabs
       screenOptions={{

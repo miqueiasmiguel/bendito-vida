@@ -5,9 +5,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BioactiveMap } from '@/components/dashboard/BioactiveMap';
 import { DailyTip } from '@/components/dashboard/DailyTip';
+import type { CheckinValues } from '@/components/dashboard/WeeklyCheckinCard';
 import { WeeklyCheckinCard } from '@/components/dashboard/WeeklyCheckinCard';
 import { Button } from '@/components/ui';
 import { INGREDIENTS } from '@/data/ingredients';
+import { useProgressStore } from '@/stores/useProgressStore';
 import { useQuizStore } from '@/stores/useQuizStore';
 import { colors, spacing, typography } from '@/theme';
 
@@ -17,6 +19,17 @@ function getDailyTipIngredient() {
 
 export default function HomeScreen() {
   const nutritionProfile = useQuizStore((s) => s.nutritionProfile);
+  const checkins = useProgressStore((s) => s.checkins);
+
+  const today = new Date().toLocaleDateString('en-CA');
+  const todayRaw = checkins.find((c) => c.date === today);
+  const existingCheckin: CheckinValues | undefined = todayRaw
+    ? {
+        energyScore: todayRaw.energy_score,
+        sleepScore: todayRaw.sleep_score,
+        focusScore: todayRaw.focus_score,
+      }
+    : undefined;
 
   const topNutrients = nutritionProfile?.topNutrients ?? [];
   const recommendedIngredients = nutritionProfile?.suggestedIngredients ?? [];
@@ -53,7 +66,11 @@ export default function HomeScreen() {
         )}
 
         <View style={styles.section}>
-          <WeeklyCheckinCard compact onPress={() => router.push('/(tabs)/progress')} />
+          <WeeklyCheckinCard
+            compact
+            existingCheckin={existingCheckin}
+            onPress={() => router.push('/(tabs)/progress')}
+          />
         </View>
 
         <View style={styles.section}>

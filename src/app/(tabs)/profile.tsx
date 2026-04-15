@@ -15,7 +15,7 @@ import { useAuthStore } from '@/stores/useAuthStore';
 import { useProfileStore } from '@/stores/useProfileStore';
 import { useQuizStore } from '@/stores/useQuizStore';
 import { colors, radii, spacing, typography } from '@/theme';
-import type { SavedMix } from '@/types/profile';
+import type { Mix } from '@/types/database';
 
 function formatMemberDate(dateStr: string): string {
   return new Intl.DateTimeFormat('pt-BR', {
@@ -108,7 +108,7 @@ export default function ProfileScreen() {
           )}
 
           {!isLoading && mixes.length > 0 && (
-            <FlatList<SavedMix>
+            <FlatList<Mix>
               data={mixes}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => <SavedMixCard mix={item} />}
