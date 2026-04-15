@@ -1,26 +1,10 @@
 import { create } from 'zustand';
 
-export interface Checkin {
-  id: string;
-  /** ISO week string, e.g. "2026-W15" */
-  week: string;
-  energyScore: number;
-  sleepScore: number;
-  focusScore: number;
-  createdAt: number;
-}
+import { supabase } from '@/lib/supabase';
+import type { DailyCheckin } from '@/types/database';
 
-function getISOWeek(date: Date): string {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7; // Monday=1 … Sunday=7
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-  return `${d.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
-}
-
-export function getCurrentISOWeek(): string {
-  return getISOWeek(new Date());
+function getTodayDate(): string {
+  return new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local timezone
 }
 
 interface AddCheckinData {
@@ -30,30 +14,63 @@ interface AddCheckinData {
 }
 
 interface ProgressStore {
-  checkins: Checkin[];
-  addCheckin: (data: AddCheckinData) => void;
-  getCurrentWeekCheckin: () => Checkin | undefined;
+  checkins: DailyCheckin[];
+  isLoading: boolean;
+  error: string | null;
+  fetchCheckins: (userId: string) => Promise<void>;
+  addCheckin: (userId: string, data: AddCheckinData) => Promise<void>;
+  getTodayCheckin: () => DailyCheckin | undefined;
 }
 
 export const useProgressStore = create<ProgressStore>((set, get) => ({
   checkins: [],
+  isLoading: false,
+  error: null,
 
-  addCheckin(data) {
-    const week = getCurrentISOWeek();
-    // Prevent duplicates within the same ISO week
-    const existing = get().checkins.find((c) => c.week === week);
-    if (existing) return;
-    const checkin: Checkin = {
-      id: `${week}-${Date.now()}`,
-      week,
-      ...data,
-      createdAt: Date.now(),
-    };
-    set((state) => ({ checkins: [...state.checkins, checkin] }));
+  fetchCheckins: async (userId: string) => {
+    set({ isLoading: true, error: null });
+    const { data, error } = await supabase
+      .from('daily_checkins')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      set({ isLoading: false, error: error.message });
+      return;
+    }
+    set({ checkins: (data as DailyCheckin[]) ?? [], isLoading: false });
   },
 
-  getCurrentWeekCheckin() {
-    const week = getCurrentISOWeek();
-    return get().checkins.find((c) => c.week === week);
+  addCheckin: async (userId: string, data: AddCheckinData) => {
+    const date = getTodayDate();
+
+    // Optimistic duplicate guard
+    const existing = get().checkins.find((c) => c.date === date);
+    if (existing) return;
+
+    const { data: inserted, error } = await supabase
+      .from('daily_checkins')
+      .insert({
+        user_id: userId,
+        date,
+        energy_score: data.energyScore,
+        sleep_score: data.sleepScore,
+        focus_score: data.focusScore,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      set({ error: error.message });
+      return;
+    }
+
+    set((state) => ({ checkins: [inserted as DailyCheckin, ...state.checkins] }));
+  },
+
+  getTodayCheckin() {
+    const today = getTodayDate();
+    return get().checkins.find((c) => c.date === today);
   },
 }));
