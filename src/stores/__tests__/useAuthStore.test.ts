@@ -11,6 +11,12 @@ jest.mock('@/lib/supabase', () => ({
       exchangeCodeForSession: jest.fn(),
       signOut: jest.fn(),
     },
+    from: jest.fn(() => ({
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      single: jest.fn().mockResolvedValue({ data: null, error: null }),
+      upsert: jest.fn().mockResolvedValue({ data: null, error: null }),
+    })),
   },
 }));
 
@@ -33,6 +39,7 @@ const { supabase } = require('@/lib/supabase') as {
       exchangeCodeForSession: jest.Mock;
       signOut: jest.Mock;
     };
+    from: jest.Mock;
   };
 };
 const WebBrowser = require('expo-web-browser') as { openAuthSessionAsync: jest.Mock };
@@ -45,6 +52,8 @@ beforeEach(() => {
       isLoading: false,
       error: null,
       sessionChecked: false,
+      onboardingChecked: false,
+      onboardingCompleted: false,
     });
   });
   jest.clearAllMocks();
@@ -154,6 +163,41 @@ describe('useAuthStore', () => {
       act(() => result.current.clearError());
 
       expect(result.current.error).toBeNull();
+    });
+  });
+
+  describe('markOnboardingComplete', () => {
+    it('upserts onboarding_completed=true and sets onboardingCompleted in store', async () => {
+      const mockUpsert = jest.fn().mockResolvedValue({ data: null, error: null });
+      supabase.from.mockReturnValue({ upsert: mockUpsert });
+
+      act(() => {
+        useAuthStore.setState({
+          user: { id: 'user-123', name: 'Test', email: 'test@test.com', createdAt: '' },
+          onboardingCompleted: false,
+        });
+      });
+
+      const { result } = renderHook(() => useAuthStore());
+
+      await act(async () => {
+        await result.current.markOnboardingComplete();
+      });
+
+      expect(supabase.from).toHaveBeenCalledWith('profiles');
+      expect(mockUpsert).toHaveBeenCalledWith({ id: 'user-123', onboarding_completed: true });
+      expect(result.current.onboardingCompleted).toBe(true);
+    });
+
+    it('does nothing when user is not authenticated', async () => {
+      const { result } = renderHook(() => useAuthStore());
+
+      await act(async () => {
+        await result.current.markOnboardingComplete();
+      });
+
+      expect(supabase.from).not.toHaveBeenCalled();
+      expect(result.current.onboardingCompleted).toBe(false);
     });
   });
 
