@@ -1,5 +1,5 @@
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
 import { StyleSheet } from 'react-native';
@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import PoppinsRegular from '@/assets/fonts/Poppins-Regular.ttf';
 import PoppinsSemiBold from '@/assets/fonts/Poppins-SemiBold.ttf';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -17,13 +18,29 @@ export default function RootLayout() {
     'Poppins-SemiBold': PoppinsSemiBold,
   });
 
+  const { user, sessionChecked, onboardingChecked, onboardingCompleted } = useAuthStore();
+
+  // appReady when: fonts done AND session known AND (no user OR profile fetched)
+  const appReady =
+    (fontsLoaded || !!fontError) && sessionChecked && (user === null || onboardingChecked);
+
+  // Hide splash only after fonts AND auth/onboarding state are resolved
   useEffect(() => {
-    if (fontsLoaded || fontError) {
+    if (appReady) {
       SplashScreen.hideAsync();
     }
-  }, [fontsLoaded, fontError]);
+  }, [appReady]);
 
-  if (!fontsLoaded && !fontError) {
+  // Onboarding gate: authenticated users who never completed onboarding go to quiz
+  useEffect(() => {
+    if (!appReady) return;
+    if (user && !onboardingCompleted) {
+      router.replace('/(onboarding)/quiz');
+    }
+  }, [appReady, user, onboardingCompleted]);
+
+  // Keep splash visible until everything is ready
+  if (!appReady) {
     return null;
   }
 
