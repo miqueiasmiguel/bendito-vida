@@ -1,3 +1,4 @@
+import { Leaf } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -84,8 +85,8 @@ export function BioactiveMap({
           <View key={ingredient.id} style={styles.ingredientChip}>
             <Text style={styles.ingredientName}>{ingredient.name}</Text>
             {ingredient.isParaibano && (
-              <View style={styles.badge} accessibilityLabel="Ingrediente paraibano">
-                <Text style={styles.badgeText}>Paraibano</Text>
+              <View style={styles.leafSeal} accessibilityLabel="Ingrediente paraibano">
+                <Leaf size={10} color={colors.neutral[50]} strokeWidth={2} />
               </View>
             )}
           </View>
@@ -136,22 +137,26 @@ const styles = StyleSheet.create({
     borderRadius: radii.badge,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
+    overflow: 'visible',
   },
   ingredientName: {
     fontFamily: typography.fontFamily.regular,
     fontSize: typography.fontSize.caption,
     color: colors.primary[700],
   },
-  badge: {
+  leafSeal: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     backgroundColor: colors.primary[700],
-    borderRadius: 4,
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-  },
-  badgeText: {
-    fontFamily: typography.fontFamily.semiBold,
-    fontSize: typography.fontSize.small,
-    color: colors.white,
+    borderWidth: 1.5,
+    borderColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
   },
   emptyText: {
     fontFamily: typography.fontFamily.regular,

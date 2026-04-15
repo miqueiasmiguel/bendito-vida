@@ -93,7 +93,7 @@ export function WeeklyCheckinCard({
   // ── Compact (home teaser) ────────────────────────────────────────────────
   if (compact) {
     return (
-      <View style={styles.card} accessibilityLabel="Check-in da semana">
+      <View style={styles.card} accessibilityLabel="Check-in de hoje">
         <View style={styles.content}>
           <ClipboardList
             color={colors.primary[700]}
@@ -102,26 +102,32 @@ export function WeeklyCheckinCard({
             accessibilityElementsHidden
           />
           <View style={styles.text}>
-            <Text style={styles.title}>Check-in da semana</Text>
+            <Text style={styles.title}>Check-in de hoje</Text>
             <Text style={styles.subtitle}>Como você está se sentindo?</Text>
           </View>
         </View>
-        <TouchableOpacity
-          style={styles.button}
-          onPress={onPress}
-          accessibilityRole="button"
-          accessibilityLabel="Responder check-in da semana"
-          activeOpacity={0.8}
-        >
-          <Text style={styles.buttonLabel}>Responder</Text>
-        </TouchableOpacity>
+        {existingCheckin ? (
+          <Text style={styles.doneLabelCompact} accessibilityLabel="Check-in já realizado hoje">
+            Feito hoje ✓
+          </Text>
+        ) : (
+          <TouchableOpacity
+            style={styles.button}
+            onPress={onPress}
+            accessibilityRole="button"
+            accessibilityLabel="Responder check-in de hoje"
+            activeOpacity={0.8}
+          >
+            <Text style={styles.buttonLabel}>Responder</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   }
 
   // ── Full form ────────────────────────────────────────────────────────────
   return (
-    <View style={styles.card} accessibilityLabel="Formulário de check-in semanal">
+    <View style={styles.card} accessibilityLabel="Formulário de check-in diário">
       <View style={styles.formHeader}>
         <ClipboardList
           color={colors.primary[700]}
@@ -129,10 +135,10 @@ export function WeeklyCheckinCard({
           strokeWidth={1.5}
           accessibilityElementsHidden
         />
-        <Text style={styles.title}>Check-in da semana</Text>
+        <Text style={styles.title}>Check-in de hoje</Text>
       </View>
 
-      {isReadOnly && <Text style={styles.doneLabel}>Check-in da semana realizado ✓</Text>}
+      {isReadOnly && <Text style={styles.doneLabel}>Check-in de hoje realizado ✓</Text>}
 
       <View style={styles.scales}>
         <ScaleRow label="Disposição" value={energy} onChange={setEnergy} readonly={isReadOnly} />
@@ -219,6 +225,11 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.caption,
     color: colors.semantic.success,
     marginBottom: spacing.md,
+  },
+  doneLabelCompact: {
+    fontFamily: typography.fontFamily.semiBold,
+    fontSize: typography.fontSize.caption,
+    color: colors.semantic.success,
   },
   scales: {
     gap: spacing.md,

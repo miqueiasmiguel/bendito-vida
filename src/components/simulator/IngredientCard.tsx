@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   seal: {
     position: 'absolute',
     top: -6,
-    left: -6,
+    right: -6,
     width: 20,
     height: 20,
     borderRadius: 10,

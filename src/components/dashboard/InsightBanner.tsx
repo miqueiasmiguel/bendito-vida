@@ -2,23 +2,25 @@ import { Sparkles } from 'lucide-react-native';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import type { Checkin } from '@/stores/useProgressStore';
+import type { DailyCheckin } from '@/types/database';
 import { colors, radii, spacing, typography } from '@/theme';
 
 export interface InsightBannerProps {
-  checkins: Checkin[];
+  checkins: DailyCheckin[];
 }
 
-function avgScore(c: Checkin): number {
-  return (c.energyScore + c.sleepScore + c.focusScore) / 3;
+function avgScore(c: DailyCheckin): number {
+  return (c.energy_score + c.sleep_score + c.focus_score) / 3;
 }
 
-function buildInsight(checkins: Checkin[]): string {
+function buildInsight(checkins: DailyCheckin[]): string {
   if (checkins.length < 2) {
     return 'Continue registrando seu check-in para ver tendências de evolução.';
   }
 
-  const sorted = [...checkins].sort((a, b) => a.createdAt - b.createdAt);
+  const sorted = [...checkins].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+  );
   const latest = sorted[sorted.length - 1];
   const previous = sorted[sorted.length - 2];
   const latestAvg = avgScore(latest);

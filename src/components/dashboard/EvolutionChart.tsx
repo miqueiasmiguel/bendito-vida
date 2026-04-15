@@ -2,23 +2,32 @@ import React from 'react';
 import { Dimensions, StyleSheet, Text, View } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
 
-import type { Checkin } from '@/stores/useProgressStore';
+import type { DailyCheckin } from '@/types/database';
 import { colors, radii, spacing, typography } from '@/theme';
 
 export interface EvolutionChartProps {
-  checkins: Checkin[];
+  checkins: DailyCheckin[];
 }
 
-const MAX_WEEKS = 8;
+const MAX_ENTRIES = 30;
 const CHART_WIDTH = Dimensions.get('window').width - spacing.lg * 2;
 const CHART_HEIGHT = 180;
 
-function avgScore(c: Checkin): number {
-  return parseFloat(((c.energyScore + c.sleepScore + c.focusScore) / 3).toFixed(2));
+function avgScore(c: DailyCheckin): number {
+  return parseFloat(((c.energy_score + c.sleep_score + c.focus_score) / 3).toFixed(2));
+}
+
+function formatDateLabel(dateStr: string): string {
+  // dateStr is YYYY-MM-DD → DD/MM
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  return `${parts[2]}/${parts[1]}`;
 }
 
 export function EvolutionChart({ checkins }: EvolutionChartProps) {
-  const sorted = [...checkins].sort((a, b) => a.createdAt - b.createdAt).slice(-MAX_WEEKS);
+  const sorted = [...checkins]
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+    .slice(-MAX_ENTRIES);
 
   if (sorted.length === 0) {
     return (
@@ -29,18 +38,13 @@ export function EvolutionChart({ checkins }: EvolutionChartProps) {
     );
   }
 
-  const labels = sorted.map((c) => {
-    // "2026-W15" → "S15"
-    const weekNum = c.week.split('-W')[1] ?? c.week;
-    return `S${weekNum}`;
-  });
-
+  const labels = sorted.map((c) => formatDateLabel(c.date));
   const data = sorted.map(avgScore);
 
   return (
     <View style={styles.wrapper}>
-      <Text style={styles.sectionTitle}>Evolução semanal</Text>
-      <View accessibilityLabel="Gráfico de evolução semanal" accessible>
+      <Text style={styles.sectionTitle}>Evolução diária</Text>
+      <View accessibilityLabel="Gráfico de evolução diária" accessible>
         <LineChart
           data={{
             labels,

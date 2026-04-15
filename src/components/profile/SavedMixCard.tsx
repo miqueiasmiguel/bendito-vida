@@ -3,10 +3,10 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { INGREDIENTS } from '@/data/ingredients';
 import { colors, radii, spacing, typography } from '@/theme';
-import type { SavedMix } from '@/types/profile';
+import type { Mix } from '@/types/database';
 
 export interface SavedMixCardProps {
-  mix: SavedMix;
+  mix: Mix;
 }
 
 function formatDate(isoString: string): string {
@@ -19,9 +19,9 @@ function formatDate(isoString: string): string {
 }
 
 export function SavedMixCard({ mix }: SavedMixCardProps) {
-  const formattedDate = formatDate(mix.createdAt);
+  const formattedDate = formatDate(mix.created_at);
 
-  const ingredientNames = mix.ingredientIds
+  const ingredientNames = mix.ingredients
     .map((id) => INGREDIENTS.find((i) => i.id === id)?.name ?? id)
     .filter(Boolean);
 
@@ -50,10 +50,10 @@ export function SavedMixCard({ mix }: SavedMixCardProps) {
 
       <View style={styles.nutritionRow}>
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{mix.calories} kcal</Text>
+          <Text style={styles.badgeText}>{mix.nutrition.calories} kcal</Text>
         </View>
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{mix.proteins}g proteína</Text>
+          <Text style={styles.badgeText}>{mix.nutrition.protein}g proteína</Text>
         </View>
       </View>
     </View>
