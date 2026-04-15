@@ -15,6 +15,12 @@ jest.mock('@/utils/match-profile', () => ({
   matchProfile: jest.fn(() => ({ primaryGoal: 'energia', tags: [] })),
 }));
 
+jest.mock('@/stores/useAuthStore', () => ({
+  useAuthStore: () => ({
+    markOnboardingComplete: jest.fn().mockResolvedValue(undefined),
+  }),
+}));
+
 // Reset Zustand quiz store between tests
 beforeEach(() => {
   const { useQuizStore } = require('@/stores/useQuizStore');
