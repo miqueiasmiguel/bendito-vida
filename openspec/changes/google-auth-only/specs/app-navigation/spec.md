@@ -1,7 +1,7 @@
 ## MODIFIED Requirements
 
 ### Requirement: Grupos de rota existem e não causam crash
-Os grupos `(auth)`, `(onboarding)` e `(tabs)` SHALL ter `_layout.tsx` próprios que renderizam `<Stack />` ou `<Tabs />` respectivamente, de modo que qualquer navegação para rotas dentro desses grupos não resulte em erro de rota não encontrada. O grupo `(onboarding)` SHALL ter `_layout.tsx` com `<Stack screenOptions={{ headerShown: false }} />`. O grupo `(auth)` poderá ter apenas `_layout.tsx` sem rotas filhas visíveis após a remoção de `login` e `register`.
+Os grupos `(auth)`, `(onboarding)` e `(tabs)` SHALL ter `_layout.tsx` próprios que renderizam `<Stack />` ou `<Tabs />` respectivamente, de modo que qualquer navegação para rotas dentro desses grupos não resulte em erro de rota não encontrada. O grupo `(onboarding)` SHALL ter `_layout.tsx` com `<Stack screenOptions={{ headerShown: false }} />`. O grupo `(auth)` terá apenas `_layout.tsx` sem rotas filhas visíveis após a remoção de `login` e `register`. A rota de callback OAuth reside em `src/app/auth/callback.tsx` (diretório `auth` real, fora do route group) para que o path `/auth/callback` seja acessível via deep link.
 
 #### Scenario: Tabs layout renderiza 4 abas
 - **WHEN** o usuário acessa qualquer rota dentro de `/(tabs)/`

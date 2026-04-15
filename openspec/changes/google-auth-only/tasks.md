@@ -36,3 +36,4 @@
 - [x] 6.2 Criar `src/app/(auth)/callback.tsx` — rota que o Android navega após o deep link (o OS entrega o intent diretamente ao Expo Router em vez de retornar para `openAuthSessionAsync`)
 - [x] 6.3 Atualizar `signInWithGoogle` no store para usar `exchangeCodeForSession` no caminho iOS (onde `openAuthSessionAsync` retorna `type: 'success'` com `?code=`)
 - [x] 6.4 Atualizar testes do store para refletir PKCE (`exchangeCodeForSession` no lugar de `setSession`)
+- [x] 6.5 Mover `(auth)/callback.tsx` → `auth/callback.tsx`: Expo Router route groups não contribuem para a URL, então `(auth)/callback` resolvia para `/callback` em vez de `/auth/callback`

@@ -21,14 +21,19 @@ A autenticação Google via Supabase no Expo usa o pacote `expo-auth-session` ju
 
 ## Decisions
 
-### Decisão 1: `expo-auth-session` + `expo-web-browser` ao invés de Supabase JS nativo
+### Decisão 1: `expo-auth-session` + `expo-web-browser` + PKCE ao invés de Supabase JS nativo com implicit flow
 
-O Supabase JS SDK (`supabase.auth.signInWithOAuth`) funciona em browsers mas não gerencia o deep link callback no Expo. A abordagem correta para Expo é:
+O Supabase JS SDK (`supabase.auth.signInWithOAuth`) funciona em browsers mas não gerencia o deep link callback no Expo. A abordagem correta para Expo é PKCE flow (`flowType: 'pkce'` em `createClient`):
 
 1. Usar `makeRedirectUri` do `expo-auth-session` para gerar a URL de callback
 2. Chamar `supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } })`
 3. Abrir a URL retornada com `WebBrowser.openAuthSessionAsync`
-4. Capturar o fragment da URL de retorno e trocar pelo token com `supabase.auth.setSession`
+4. **Android**: o OS entrega o deep link como intent de navegação ao Expo Router, que roteia para `src/app/auth/callback.tsx`. A rota extrai `?code=` via `useLocalSearchParams` e chama `supabase.auth.exchangeCodeForSession(code)`.
+5. **iOS**: `openAuthSessionAsync` captura o redirect in-app (SFSafariViewController) e retorna `{ type: 'success', url }`. O store extrai `?code=` da URL e chama `supabase.auth.exchangeCodeForSession(code)`.
+
+**Por que PKCE, não implicit?** Com implicit flow, os tokens chegam no hash da URL (`#access_token=...`). O Expo Router descarta o hash ao processar deep links, tornando os tokens inacessíveis na rota de callback. Com PKCE, o código de autorização chega em `?code=` (query param), que o Expo Router preserva e expõe via `useLocalSearchParams`.
+
+**Por que `auth/callback.tsx` e não `(auth)/callback.tsx`?** Em Expo Router, parênteses indicam route groups — o segmento não aparece na URL. `(auth)/callback.tsx` resolve para `/callback`, não `/auth/callback`. Como o deep link configurado é `bendito-vida://auth/callback`, a rota precisa estar em `src/app/auth/callback.tsx` (diretório `auth` real).
 
 **Alternativa considerada**: `@react-native-google-signin/google-signin` — exige configuração nativa (Android/iOS) e não funciona com Expo Go/dev-client sem build customizado. Mais complexidade sem benefício para o MVP.
 
@@ -51,11 +56,11 @@ Sem backward compatibility — as rotas antigas serão deletadas. Referências a
 ## Migration Plan
 
 1. Instalar dependências: `expo-auth-session`, `expo-web-browser` (verificar se já estão no projeto)
-2. Adicionar `scheme` ao `app.json`
-3. Criar `src/app/(auth)/sign-in.tsx`
-4. Refatorar `useAuthStore` (remover email/senha, adicionar `signInWithGoogle`)
-5. Remover `login.tsx` e `register.tsx`
-6. Atualizar referências de navegação (`/(auth)/login` → `/(auth)/sign-in`)
-7. Atualizar spec `app-navigation` (rota `login`/`register` → `sign-in`)
+2. Adicionar `scheme` ao `app.json` + rebuild do dev build para registrar o intent filter no AndroidManifest
+3. Configurar `flowType: 'pkce'` em `src/lib/supabase.ts`
+4. Criar `src/app/auth/callback.tsx` (rota real `/auth/callback`, não dentro do route group `(auth)`)
+5. Refatorar `useAuthStore` (remover email/senha, adicionar `signInWithGoogle` com `exchangeCodeForSession` no caminho iOS)
+6. Modificar `index.tsx` (Welcome) com botão "Entrar com Google"
+7. Remover `login.tsx` e `register.tsx`
 
-**Rollback**: Reverter commit. Não há migração de banco necessária — Supabase gerencia sessões OAuth automaticamente.
+**Rollback**: Reverter commits. Não há migração de banco necessária — Supabase gerencia sessões OAuth automaticamente.
