@@ -15,7 +15,11 @@ interface AuthState {
   user: AuthUser | null;
   isLoading: boolean;
   error: string | null;
+  /** Auth session resolved (user or null known) */
   sessionChecked: boolean;
+  /** Profile row fetched — only meaningful when user != null */
+  onboardingChecked: boolean;
+  onboardingCompleted: boolean;
 }
 
 interface AuthActions {
@@ -23,13 +27,17 @@ interface AuthActions {
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   clearError: () => void;
+  markOnboardingComplete: () => Promise<void>;
 }
 
-export const useAuthStore = create<AuthState & AuthActions>((set) => {
-  // Listen to auth state changes for session persistence between restarts
+export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
+  // Listen to auth state changes for session persistence between restarts.
+  // Keep callback synchronous — fire profile fetch as a detached promise so
+  // sessionChecked is set immediately and never blocks the splash screen.
   supabase.auth.onAuthStateChange((_event, session) => {
     if (session?.user) {
       const { id, email, created_at, user_metadata } = session.user;
+
       set({
         user: {
           id,
@@ -38,9 +46,32 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
           createdAt: created_at,
         },
         sessionChecked: true,
+        onboardingChecked: false,
       });
+
+      // Fetch onboarding flag — detached so it never blocks session resolution
+      supabase
+        .from('profiles')
+        .select('onboarding_completed')
+        .eq('id', id)
+        .single()
+        .then(({ data }) => {
+          set({
+            onboardingCompleted: data?.onboarding_completed ?? false,
+            onboardingChecked: true,
+          });
+        })
+        .catch(() => {
+          // On network/RLS error treat as incomplete; quiz is idempotent
+          set({ onboardingCompleted: false, onboardingChecked: true });
+        });
     } else {
-      set({ user: null, sessionChecked: true });
+      set({
+        user: null,
+        onboardingCompleted: false,
+        onboardingChecked: true,
+        sessionChecked: true,
+      });
     }
   });
 
@@ -49,10 +80,21 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
     isLoading: false,
     error: null,
     sessionChecked: false,
+    onboardingChecked: false,
+    onboardingCompleted: false,
 
     setUser: (user) => set({ user }),
 
     clearError: () => set({ error: null }),
+
+    markOnboardingComplete: async () => {
+      const { user } = get();
+      if (!user) return;
+
+      await supabase.from('profiles').upsert({ id: user.id, onboarding_completed: true });
+
+      set({ onboardingCompleted: true });
+    },
 
     signInWithGoogle: async () => {
       set({ isLoading: true, error: null });
@@ -95,7 +137,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set) => {
     signOut: async () => {
       set({ isLoading: true });
       await supabase.auth.signOut();
-      set({ user: null, isLoading: false });
+      set({ user: null, onboardingCompleted: false, onboardingChecked: true, isLoading: false });
     },
   };
 });
