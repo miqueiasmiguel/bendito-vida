@@ -1,4 +1,4 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: Root layout inicializa providers e fontes
 O root layout (`src/app/_layout.tsx`) SHALL carregar a fonte Poppins via `expo-font`, segurar o splash screen com `SplashScreen.preventAutoHideAsync()`, e envolver toda a aplicação com `GestureHandlerRootView` e `SafeAreaProvider`. O splash SHALL ser escondido apenas quando `appReady` for verdadeiro, onde: `appReady = (fontsLoaded || fontError) && sessionChecked && (user === null || onboardingChecked)`. O gate de onboarding SHALL executar em um `useEffect` separado que observa `appReady`, `user` e `onboardingCompleted`.
@@ -18,21 +18,3 @@ O root layout (`src/app/_layout.tsx`) SHALL carregar a fonte Poppins via `expo-f
 #### Scenario: Sem usuário — splash esconde sem fetch de perfil
 - **WHEN** `sessionChecked = true` e `user = null`
 - **THEN** `onboardingChecked` não é esperado (condição `user === null` satisfaz `appReady`); o splash esconde imediatamente após as fontes
-
----
-
-### Requirement: Grupos de rota existem e não causam crash
-Os grupos `(auth)`, `(onboarding)` e `(tabs)` SHALL ter `_layout.tsx` próprios que renderizam `<Stack />` ou `<Tabs />` respectivamente, de modo que qualquer navegação para rotas dentro desses grupos não resulte em erro de rota não encontrada. O grupo `(onboarding)` SHALL ter `_layout.tsx` com `<Stack screenOptions={{ headerShown: false }} />`. O grupo `(auth)` terá apenas `_layout.tsx` sem rotas filhas visíveis após a remoção de `login` e `register`. A rota de callback OAuth reside em `src/app/auth/callback.tsx` (diretório `auth` real, fora do route group) para que o path `/auth/callback` seja acessível via deep link.
-
-#### Scenario: Tabs layout renderiza 4 abas
-- **WHEN** o usuário acessa qualquer rota dentro de `/(tabs)/`
-- **THEN** a barra de tabs aparece com ícones: Home (House), Meu Mix (FlaskConical), Evolução (TrendingUp), Perfil (User)
-
-#### Scenario: Cor ativa das tabs
-- **WHEN** uma aba está selecionada
-- **THEN** seu ícone e label usam `colors.primary[700]` (#2D6A2E); as demais usam `colors.neutral[400]`
-
-#### Scenario: Navegação para rota de onboarding
-- **WHEN** o usuário é direcionado para `/(onboarding)/quiz`
-- **THEN** a tela renderiza sem crash e sem header visível
-
