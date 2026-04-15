@@ -17,6 +17,7 @@ import { QuizOption } from '@/components/quiz/QuizOption';
 import { QuizProgressBar } from '@/components/quiz/QuizProgressBar';
 import { Button } from '@/components/ui';
 import { QUIZ_QUESTIONS, type QuizQuestion } from '@/data/quiz-questions';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { useQuizStore } from '@/stores/useQuizStore';
 import { colors, spacing, typography } from '@/theme';
 import { matchProfile } from '@/utils/match-profile';
@@ -56,6 +57,7 @@ export default function QuizScreen() {
   const [step, setStep] = useState(0);
   const flatListRef = useRef<FlatList<QuizQuestion>>(null);
   const { answers, setAnswer, setProfile } = useQuizStore();
+  const { markOnboardingComplete } = useAuthStore();
   const buttonOpacity = useSharedValue(0);
 
   const currentQuestion = QUIZ_QUESTIONS[step];
@@ -89,17 +91,22 @@ export default function QuizScreen() {
     }
   }, [step]);
 
-  const handleNext = useCallback(() => {
+  const handleNext = useCallback(async () => {
     if (isLastStep) {
       const profile = matchProfile(answers);
       setProfile(profile);
+      try {
+        await markOnboardingComplete();
+      } catch (err) {
+        console.error('[Quiz] Failed to persist onboarding flag:', err);
+      }
       router.replace('/(tabs)/home');
     } else {
       const nextStep = step + 1;
       setStep(nextStep);
       flatListRef.current?.scrollToIndex({ index: nextStep, animated: true });
     }
-  }, [isLastStep, step, answers, setProfile]);
+  }, [isLastStep, step, answers, setProfile, markOnboardingComplete]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
