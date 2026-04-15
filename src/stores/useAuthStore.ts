@@ -3,6 +3,8 @@ import * as WebBrowser from 'expo-web-browser';
 import { create } from 'zustand';
 
 import { supabase } from '@/lib/supabase';
+import { useQuizStore } from '@/stores/useQuizStore';
+import type { NutritionProfile } from '@/utils/match-profile';
 
 export interface AuthUser {
   id: string;
@@ -27,7 +29,7 @@ interface AuthActions {
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   clearError: () => void;
-  markOnboardingComplete: () => Promise<void>;
+  markOnboardingComplete: (profile: NutritionProfile) => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
@@ -49,10 +51,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
         onboardingChecked: false,
       });
 
-      // Fetch onboarding flag — detached so it never blocks session resolution
+      // Fetch onboarding flag and bioactive profile — detached so it never blocks session resolution
       supabase
         .from('profiles')
-        .select('onboarding_completed')
+        .select('onboarding_completed, bioactive_profile')
         .eq('id', id)
         .single()
         .then(({ data }) => {
@@ -60,6 +62,11 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
             onboardingCompleted: data?.onboarding_completed ?? false,
             onboardingChecked: true,
           });
+          // Hydrate quiz store with persisted profile so bioactive map survives restarts.
+          // One-way dependency: auth bootstraps quiz state at startup.
+          if (data?.bioactive_profile) {
+            useQuizStore.getState().setProfile(data.bioactive_profile as NutritionProfile);
+          }
         })
         .catch(() => {
           // On network/RLS error treat as incomplete; quiz is idempotent
@@ -87,11 +94,13 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
 
     clearError: () => set({ error: null }),
 
-    markOnboardingComplete: async () => {
+    markOnboardingComplete: async (profile: NutritionProfile) => {
       const { user } = get();
       if (!user) return;
 
-      await supabase.from('profiles').upsert({ id: user.id, onboarding_completed: true });
+      await supabase
+        .from('profiles')
+        .upsert({ id: user.id, onboarding_completed: true, bioactive_profile: profile });
 
       set({ onboardingCompleted: true });
     },

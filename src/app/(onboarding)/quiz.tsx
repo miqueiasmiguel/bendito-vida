@@ -96,7 +96,7 @@ export default function QuizScreen() {
       const profile = matchProfile(answers);
       setProfile(profile);
       try {
-        await markOnboardingComplete();
+        await markOnboardingComplete(profile);
       } catch (err) {
         console.error('[Quiz] Failed to persist onboarding flag:', err);
       }
