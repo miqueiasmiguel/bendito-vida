@@ -50,7 +50,7 @@ export default function ProfileScreen() {
 
   const handleSignOut = async () => {
     await signOut();
-    router.replace('/(auth)/login');
+    router.replace('/');
   };
 
   const displayName = user?.name ?? 'Usuário';

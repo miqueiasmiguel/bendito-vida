@@ -1,7 +1,7 @@
-import * as Haptics from 'expo-haptics';
+import * as WebBrowser from 'expo-web-browser';
 import { router } from 'expo-router';
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -12,7 +12,10 @@ import Animated, {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { colors, spacing, typography } from '@/theme';
+
+WebBrowser.maybeCompleteAuthSession();
 
 interface DecorativeCircleProps {
   color: string;
@@ -60,6 +63,7 @@ function DecorativeCircle({ color, delay, size, top, bottom, left, right }: Deco
 
 export default function WelcomeScreen() {
   const logoScale = useSharedValue(0);
+  const { user, isLoading, error, sessionChecked, signInWithGoogle, clearError } = useAuthStore();
 
   useEffect(() => {
     logoScale.value = withSpring(1, { stiffness: 100, damping: 15 });
@@ -69,14 +73,21 @@ export default function WelcomeScreen() {
     transform: [{ scale: logoScale.value }],
   }));
 
-  const handleStart = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push('/(onboarding)/quiz');
-  };
+  // Redirect when authenticated
+  useEffect(() => {
+    if (user && sessionChecked) {
+      router.replace('/(tabs)/home');
+    }
+  }, [user, sessionChecked]);
 
-  const handleLogin = () => {
-    router.push('/(auth)/login');
-  };
+  // Show spinner while Supabase checks the persisted session
+  if (!sessionChecked) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={colors.primary[700]} />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -92,15 +103,30 @@ export default function WelcomeScreen() {
         </Animated.View>
 
         <View style={styles.ctaContainer}>
-          <Button variant="primary" label="Começar" onPress={handleStart} />
-          <TouchableOpacity
-            onPress={handleLogin}
-            style={styles.loginLink}
-            accessibilityRole="link"
-            accessibilityLabel="Já tenho conta"
-          >
-            <Text style={styles.loginText}>Já tenho conta</Text>
-          </TouchableOpacity>
+          {error ? (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{error}</Text>
+              <Text style={styles.errorDismiss} onPress={clearError}>
+                Fechar
+              </Text>
+            </View>
+          ) : null}
+
+          <Button
+            variant="primary"
+            label={isLoading ? 'Entrando…' : 'Entrar com Google'}
+            onPress={signInWithGoogle}
+            disabled={isLoading}
+            accessibilityLabel="Entrar com Google"
+          />
+
+          {isLoading ? (
+            <ActivityIndicator
+              size="small"
+              color={colors.white}
+              accessibilityLabel="Carregando autenticação"
+            />
+          ) : null}
         </View>
       </View>
     </SafeAreaView>
@@ -108,6 +134,12 @@ export default function WelcomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.neutral[50],
+  },
   decorativeCircle: {
     position: 'absolute',
   },
@@ -146,17 +178,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
   },
-  loginLink: {
-    minHeight: 44,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+  errorContainer: {
+    width: '100%',
+    backgroundColor: colors.accent[100],
+    borderRadius: 8,
+    padding: spacing.md,
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: spacing.sm,
   },
-  loginText: {
+  errorText: {
     fontFamily: typography.fontFamily.regular,
     fontSize: typography.fontSize.body,
-    color: colors.white,
+    color: colors.neutral[900],
+    textAlign: 'center',
+  },
+  errorDismiss: {
+    fontFamily: typography.fontFamily.semiBold,
+    fontSize: typography.fontSize.body,
+    color: colors.primary[700],
+    minHeight: 44,
+    paddingVertical: spacing.sm,
     textDecorationLine: 'underline',
   },
 });
