@@ -1,4 +1,4 @@
-import { Tabs } from 'expo-router';
+import { router, Tabs } from 'expo-router';
 import { FlaskConical, Home, TrendingUp, User } from 'lucide-react-native';
 import React, { useEffect } from 'react';
 
@@ -58,6 +58,11 @@ export default function TabsLayout() {
         options={{
           title: 'Perfil',
           tabBarIcon: ({ color, size }) => <User color={color} size={size} strokeWidth={1.75} />,
+        }}
+        listeners={{
+          tabPress: () => {
+            router.replace('/(tabs)/profile');
+          },
         }}
       />
     </Tabs>

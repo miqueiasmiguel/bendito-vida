@@ -16,15 +16,19 @@ import ViewShot from 'react-native-view-shot';
 import { NutrientBar } from '@/components/simulator/NutrientBar';
 import { Button } from '@/components/ui';
 import { RecipeCard } from '@/components/ui';
-import { calculateNutrition, MAX_CALORIES } from '@/data/nutrition-engine';
+import { calculateNutritionFromMix, MAX_CALORIES } from '@/data/nutrition-engine';
+import { supabase } from '@/lib/supabase';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { useSimulatorStore } from '@/stores/useSimulatorStore';
 import { colors, spacing, typography } from '@/theme';
 
 const BAR_MAX = { calories: MAX_CALORIES, fiber: 25, protein: 50, omega3: 10 };
 
 export default function ResultScreen() {
-  const { selectedIngredients } = useSimulatorStore();
-  const nutrition = calculateNutrition(selectedIngredients);
+  const { mixItems } = useSimulatorStore();
+  const { user } = useAuthStore();
+  const ingredientList = Object.values(mixItems).map((item) => item.ingredient);
+  const nutrition = calculateNutritionFromMix(mixItems);
   const recipeTitle = `Meu Mix`;
 
   const viewShotRef = useRef<ViewShot>(null);
@@ -56,20 +60,28 @@ export default function ResultScreen() {
   }, []);
 
   const handleSave = useCallback(async () => {
+    if (!user?.id) {
+      Alert.alert('Erro', 'Você precisa estar logado para salvar o mix.');
+      return;
+    }
     setSaving(true);
     try {
-      // TODO: integrate with Supabase auth + mixes table
-      // For now, simulate a save operation
-      await new Promise<void>((resolve) => setTimeout(resolve, 800));
+      const { error } = await supabase.from('mixes').insert({
+        user_id: user.id,
+        name: 'Meu Mix',
+        ingredients: ingredientList.map((i) => i.id),
+        nutrition,
+      });
+      if (error) throw error;
       setSaved(true);
     } catch {
       Alert.alert('Erro', 'Não foi possível salvar o mix. Verifique sua conexão.');
     } finally {
       setSaving(false);
     }
-  }, []);
+  }, [user?.id, ingredientList, nutrition]);
 
-  if (selectedIngredients.length === 0) {
+  if (ingredientList.length === 0) {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <View style={styles.emptyContainer}>
@@ -143,7 +155,7 @@ export default function ResultScreen() {
           options={{ format: 'png', quality: 0.95 }}
           style={styles.viewShot}
         >
-          <RecipeCard title={recipeTitle} ingredients={selectedIngredients} nutrition={nutrition} />
+          <RecipeCard title={recipeTitle} ingredients={ingredientList} nutrition={nutrition} />
         </ViewShot>
       </ScrollView>
 
