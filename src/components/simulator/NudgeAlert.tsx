@@ -8,6 +8,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { NudgeMessage } from '@/data/nutrition-engine';
 import { colors, radii, spacing, typography } from '@/theme';
@@ -24,6 +25,7 @@ export interface NudgeAlertProps {
 }
 
 export function NudgeAlert({ nudge, onDismiss }: NudgeAlertProps) {
+  const insets = useSafeAreaInsets();
   const translateY = useSharedValue(-60);
   const opacity = useSharedValue(0);
 
@@ -61,7 +63,11 @@ export function NudgeAlert({ nudge, onDismiss }: NudgeAlertProps) {
 
   return (
     <Animated.View
-      style={[styles.toast, { backgroundColor: bgColor }, animatedStyle]}
+      style={[
+        styles.toast,
+        { backgroundColor: bgColor, top: insets.top + spacing.sm },
+        animatedStyle,
+      ]}
       accessibilityRole="alert"
       accessibilityLabel={nudge.message}
       pointerEvents="none"
@@ -74,7 +80,6 @@ export function NudgeAlert({ nudge, onDismiss }: NudgeAlertProps) {
 const styles = StyleSheet.create({
   toast: {
     position: 'absolute',
-    top: spacing.lg,
     left: spacing.lg,
     right: spacing.lg,
     borderRadius: radii.input,

@@ -1,8 +1,10 @@
 import { router } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { GrainParticles } from '@/components/simulator/GrainParticles';
 import { IngredientCard } from '@/components/simulator/IngredientCard';
 import { MixJar } from '@/components/simulator/MixJar';
 import { NudgeAlert } from '@/components/simulator/NudgeAlert';
@@ -39,6 +41,29 @@ export default function SimulatorScreen() {
     weight: item.grams,
   }));
 
+  // Grain particle animation state (tasks 3.3-3.6)
+  const [particleTrigger, setParticleTrigger] = useState(0);
+  const [particleColor, setParticleColor] = useState('#000');
+  // Delayed fill level: jar fill animates after particles fall (~500ms)
+  const [delayedFillLevel, setDelayedFillLevel] = useState(fillLevel);
+  const fillTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    // If fillLevel decreased (reset/remove), update immediately
+    if (fillLevel <= delayedFillLevel) {
+      setDelayedFillLevel(fillLevel);
+      return;
+    }
+    // Otherwise delay fill rise after particles (task 3.4)
+    if (fillTimerRef.current) clearTimeout(fillTimerRef.current);
+    fillTimerRef.current = setTimeout(() => {
+      setDelayedFillLevel(fillLevel);
+    }, 500);
+    return () => {
+      if (fillTimerRef.current) clearTimeout(fillTimerRef.current);
+    };
+  }, [fillLevel, delayedFillLevel]);
+
   // Nudge: latest-wins — new selection immediately replaces current nudge
   const [currentNudge, setCurrentNudge] = useState<NudgeMessage | null>(null);
   const [nudgeKey, setNudgeKey] = useState(0);
@@ -66,6 +91,10 @@ export default function SimulatorScreen() {
 
   const handlePress = useCallback(
     (ingredient: Ingredient) => {
+      // Trigger particle animation (task 3.3) + haptics (task 3.5)
+      setParticleColor(ingredient.color);
+      setParticleTrigger((t) => t + 1);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       addGrams(ingredient, 30);
     },
     [addGrams],
@@ -103,13 +132,16 @@ export default function SimulatorScreen() {
       {/* Top section — Jar */}
       <View style={styles.jarSection}>
         <Text style={styles.title} accessibilityRole="header">
-          Meu Mix
+          Simulador Meu Mix
         </Text>
         <Text style={styles.subtitle}>
-          {!hasItems ? 'Toque nos ingredientes para montar seu mix' : `${totalGrams}g no mix`}
+          {!hasItems ? 'Monte sua mistura funcional' : `${totalGrams}g no mix`}
         </Text>
 
-        <MixJar fillLevel={fillLevel} fillStops={fillStops} />
+        <View style={styles.jarContainer}>
+          <MixJar fillLevel={delayedFillLevel} fillStops={fillStops} />
+          <GrainParticles color={particleColor} trigger={particleTrigger} />
+        </View>
       </View>
 
       {/* Bottom section — Ingredient grid */}
@@ -134,12 +166,12 @@ export default function SimulatorScreen() {
       <View style={styles.ctaContainer}>
         {hasItems && (
           <View style={styles.resetButton}>
-            <Button variant="secondary" label="Limpar Mix" onPress={handleReset} />
+            <Button variant="secondary" label="REINICIAR" onPress={handleReset} />
           </View>
         )}
         <Button
           variant="primary"
-          label="Gerar Minha Receita"
+          label="MISTURAR & GERAR RECEITA"
           onPress={() => router.push('/result')}
           disabled={!hasItems}
         />
@@ -171,6 +203,11 @@ const styles = StyleSheet.create({
     color: colors.neutral[400],
     alignSelf: 'flex-start',
     marginBottom: spacing.sm,
+  },
+  jarContainer: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   listSection: {
     flex: 1,
