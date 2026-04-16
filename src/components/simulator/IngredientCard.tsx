@@ -11,6 +11,7 @@ import Animated, {
 
 import type { Ingredient } from '@/data/ingredients';
 import { colors, radii, spacing, typography } from '@/theme';
+import { GrainIcon } from '@/components/ui/GrainIcon';
 
 export interface IngredientCardProps {
   ingredient: Ingredient;
@@ -43,6 +44,9 @@ export function IngredientCard({
     onPress(ingredient);
   };
 
+  // Origin text (task 4.3)
+  const originText = ingredient.isParaibano ? 'Nativo da PB' : ingredient.origin;
+
   return (
     <Animated.View style={[styles.card, { width: cardWidth }, animatedStyle]}>
       <TouchableOpacity
@@ -74,12 +78,17 @@ export function IngredientCard({
           </TouchableOpacity>
         )}
 
-        <View style={[styles.colorDot, { backgroundColor: ingredient.color }]} />
+        <View style={[styles.iconCircle, { backgroundColor: ingredient.color }]}>
+          <GrainIcon ingredientId={ingredient.id} size={24} color="#FFFFFF" />
+        </View>
         <View style={styles.nameContainer}>
           <Text style={styles.name} numberOfLines={2}>
             {ingredient.name}
           </Text>
         </View>
+        <Text style={styles.origin} numberOfLines={1}>
+          {originText}
+        </Text>
         <Text style={styles.calories}>{ingredient.nutrition.calories} kcal</Text>
       </TouchableOpacity>
     </Animated.View>
@@ -88,15 +97,15 @@ export function IngredientCard({
 
 const styles = StyleSheet.create({
   card: {
-    height: 100,
+    height: 120, // task 4.1: increased from 100px
     borderRadius: radii.card,
-    borderWidth: 1.5,
+    borderWidth: 1, // task 4.4: refined from 1.5px
     borderColor: colors.neutral[200],
     shadowColor: colors.neutral[900],
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1 }, // task 4.4: softer shadow
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
     overflow: 'visible',
   },
   cardTouchable: {
@@ -139,15 +148,17 @@ const styles = StyleSheet.create({
     color: colors.white,
     lineHeight: 14,
   },
-  colorDot: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    marginBottom: spacing.xs,
-    marginTop: spacing.xs,
+  iconCircle: {
+    width: 44, // task 4.2: increased from 40px
+    height: 44,
+    borderRadius: 22,
+    marginBottom: 2,
+    marginTop: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   nameContainer: {
-    height: 36,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
@@ -157,7 +168,14 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.caption,
     color: colors.neutral[900],
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 16,
+  },
+  origin: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.fontSize.small,
+    color: colors.neutral[700],
+    textAlign: 'center',
+    marginBottom: 1,
   },
   calories: {
     fontFamily: typography.fontFamily.regular,

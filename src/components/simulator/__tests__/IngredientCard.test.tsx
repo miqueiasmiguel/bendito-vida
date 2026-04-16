@@ -133,4 +133,18 @@ describe('IngredientCard', () => {
     expect(getByText('Gergelim')).toBeTruthy();
     expect(queryByText('172 kcal')).toBeTruthy();
   });
+
+  it('displays "Nativo da PB" for paraibano ingredients', () => {
+    const { getByText } = render(
+      <IngredientCard ingredient={mockIngredient} grams={0} {...defaultProps} />,
+    );
+    expect(getByText('Nativo da PB')).toBeTruthy();
+  });
+
+  it('displays origin text for non-paraibano ingredients', () => {
+    const { getByText } = render(
+      <IngredientCard ingredient={nonParaibanoIngredient} grams={0} {...defaultProps} />,
+    );
+    expect(getByText('Cultivada no Nordeste')).toBeTruthy();
+  });
 });
