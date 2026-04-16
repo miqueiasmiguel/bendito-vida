@@ -21,8 +21,8 @@ export interface Mix {
   id: string;
   user_id: string;
   name: string;
-  /** Array of ingredient IDs referencing src/data/ingredients.ts */
-  ingredients: string[];
+  /** Array of ingredient entries with ID and grams, referencing src/data/ingredients.ts */
+  ingredients: { id: string; grams: number }[];
   nutrition: NutritionSummary;
   created_at: string;
 }
