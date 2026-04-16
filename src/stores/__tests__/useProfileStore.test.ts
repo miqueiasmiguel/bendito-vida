@@ -21,7 +21,10 @@ function makeMixRow(overrides: Record<string, unknown> = {}) {
     user_id: 'user-1',
     name: 'Meu Mix',
     created_at: '2026-04-10T12:00:00Z',
-    ingredients: ['gergelim', 'feijao-verde'],
+    ingredients: [
+      { id: 'gergelim', grams: 30 },
+      { id: 'feijao-verde', grams: 20 },
+    ],
     nutrition: { calories: 200, fiber: 5, protein: 10, omega3: 1 },
     ...overrides,
   };
@@ -87,7 +90,10 @@ describe('useProfileStore', () => {
       });
       expect(result.current.mixes).toHaveLength(1);
       expect(result.current.mixes[0].name).toBe('Meu Mix');
-      expect(result.current.mixes[0].ingredients).toEqual(['gergelim', 'feijao-verde']);
+      expect(result.current.mixes[0].ingredients).toEqual([
+        { id: 'gergelim', grams: 30 },
+        { id: 'feijao-verde', grams: 20 },
+      ]);
     });
   });
 

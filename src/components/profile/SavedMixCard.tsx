@@ -23,7 +23,7 @@ export function SavedMixCard({ mix, onPress }: SavedMixCardProps) {
   const formattedDate = formatDate(mix.created_at);
 
   const ingredientNames = mix.ingredients
-    .map((id) => INGREDIENTS.find((i) => i.id === id)?.name ?? id)
+    .map(({ id }) => INGREDIENTS.find((i) => i.id === id)?.name ?? id)
     .filter(Boolean);
 
   const displayed = ingredientNames.slice(0, 3);

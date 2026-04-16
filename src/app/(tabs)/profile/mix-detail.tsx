@@ -17,6 +17,7 @@ import { NutrientBar } from '@/components/simulator/NutrientBar';
 import { Button, RecipeCard } from '@/components/ui';
 import { INGREDIENTS } from '@/data/ingredients';
 import { MAX_CALORIES } from '@/data/nutrition-engine';
+import type { MixItem } from '@/stores/useSimulatorStore';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useProfileStore } from '@/stores/useProfileStore';
 import { colors, spacing, typography } from '@/theme';
@@ -83,9 +84,12 @@ export default function MixDetailScreen() {
     );
   }
 
-  const ingredientObjects = mix.ingredients
-    .map((id) => INGREDIENTS.find((i) => i.id === id))
-    .filter((i): i is NonNullable<typeof i> => i !== undefined);
+  const ingredientObjects: MixItem[] = mix.ingredients
+    .map(({ id, grams }) => {
+      const ingredient = INGREDIENTS.find((i) => i.id === id);
+      return ingredient ? { ingredient, grams } : null;
+    })
+    .filter((i): i is MixItem => i !== null);
 
   const { calories, fiber, protein, omega3 } = mix.nutrition;
 

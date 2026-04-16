@@ -9,7 +9,10 @@ const baseMix: Mix = {
   user_id: 'user-1',
   name: 'Mix Energético',
   created_at: '2026-04-10T12:00:00Z',
-  ingredients: ['gergelim', 'feijao-verde'],
+  ingredients: [
+    { id: 'gergelim', grams: 30 },
+    { id: 'feijao-verde', grams: 20 },
+  ],
   nutrition: { calories: 200, fiber: 5, protein: 10, omega3: 1 },
 };
 
@@ -33,7 +36,13 @@ describe('SavedMixCard', () => {
   it('trunca com "+N" quando há mais de 3 ingredientes', () => {
     const mixWith5: Mix = {
       ...baseMix,
-      ingredients: ['gergelim', 'feijao-verde', 'amendoim', 'linhaça', 'chia'],
+      ingredients: [
+        { id: 'gergelim', grams: 30 },
+        { id: 'feijao-verde', grams: 20 },
+        { id: 'amendoim', grams: 15 },
+        { id: 'linhaça', grams: 10 },
+        { id: 'chia', grams: 10 },
+      ],
     };
     const { getByText } = render(<SavedMixCard mix={mixWith5} />);
     expect(getByText(/\+2/)).toBeTruthy();
