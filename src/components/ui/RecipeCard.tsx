@@ -1,18 +1,18 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import type { Ingredient } from '@/data/ingredients';
 import type { NutritionSummary } from '@/data/nutrition-engine';
+import type { MixItem } from '@/stores/useSimulatorStore';
 import { colors, radii, spacing, typography } from '@/theme';
 
 export interface RecipeCardProps {
   title: string;
-  ingredients: Ingredient[];
+  ingredients: MixItem[];
   nutrition: NutritionSummary;
 }
 
 export function RecipeCard({ title, ingredients, nutrition }: RecipeCardProps) {
-  const hasParaibano = ingredients.some((i) => i.isParaibano);
+  const hasParaibano = ingredients.some((item) => item.ingredient.isParaibano);
 
   return (
     <View style={styles.card} accessibilityLabel="Cartão de receita">
@@ -37,18 +37,21 @@ export function RecipeCard({ title, ingredients, nutrition }: RecipeCardProps) {
       )}
 
       {/* Ingredients list */}
-      <Text style={styles.sectionTitle}>Ingredientes (30g cada)</Text>
+      <Text style={styles.sectionTitle}>Ingredientes</Text>
       <View style={styles.ingredientsList}>
-        {ingredients.map((ing) => (
-          <View key={ing.id} style={styles.ingredientRow}>
-            <View style={[styles.colorDot, { backgroundColor: ing.color }]} />
-            <Text style={styles.ingredientName}>{ing.name}</Text>
-            {ing.isParaibano && (
+        {ingredients.map((item) => (
+          <View key={item.ingredient.id} style={styles.ingredientRow}>
+            <View style={[styles.colorDot, { backgroundColor: item.ingredient.color }]} />
+            <Text style={styles.ingredientName}>{item.ingredient.name}</Text>
+            <Text style={styles.ingredientGrams}>{item.grams}g</Text>
+            {item.ingredient.isParaibano && (
               <View style={styles.smallBadge}>
                 <Text style={styles.smallBadgeText}>PB</Text>
               </View>
             )}
-            <Text style={styles.ingredientCalories}>{ing.nutrition.calories} kcal</Text>
+            <Text style={styles.ingredientCalories}>
+              {Math.round((item.ingredient.nutrition.calories * item.grams) / 100)} kcal
+            </Text>
           </View>
         ))}
       </View>
@@ -179,6 +182,11 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.body,
     color: colors.neutral[900],
     flex: 1,
+  },
+  ingredientGrams: {
+    fontFamily: typography.fontFamily.semiBold,
+    fontSize: typography.fontSize.caption,
+    color: colors.neutral[700],
   },
   smallBadge: {
     backgroundColor: colors.primary[700],

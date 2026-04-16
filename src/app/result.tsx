@@ -27,7 +27,7 @@ const BAR_MAX = { calories: MAX_CALORIES, fiber: 25, protein: 50, omega3: 10 };
 export default function ResultScreen() {
   const { mixItems } = useSimulatorStore();
   const { user } = useAuthStore();
-  const ingredientList = Object.values(mixItems).map((item) => item.ingredient);
+  const mixEntries = Object.values(mixItems);
   const nutrition = calculateNutritionFromMix(mixItems);
   const recipeTitle = `Meu Mix`;
 
@@ -69,7 +69,7 @@ export default function ResultScreen() {
       const { error } = await supabase.from('mixes').insert({
         user_id: user.id,
         name: 'Meu Mix',
-        ingredients: ingredientList.map((i) => i.id),
+        ingredients: mixEntries.map(({ ingredient, grams }) => ({ id: ingredient.id, grams })),
         nutrition,
       });
       if (error) throw error;
@@ -79,9 +79,9 @@ export default function ResultScreen() {
     } finally {
       setSaving(false);
     }
-  }, [user?.id, ingredientList, nutrition]);
+  }, [user?.id, mixEntries, nutrition]);
 
-  if (ingredientList.length === 0) {
+  if (mixEntries.length === 0) {
     return (
       <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <View style={styles.emptyContainer}>
@@ -155,7 +155,7 @@ export default function ResultScreen() {
           options={{ format: 'png', quality: 0.95 }}
           style={styles.viewShot}
         >
-          <RecipeCard title={recipeTitle} ingredients={ingredientList} nutrition={nutrition} />
+          <RecipeCard title={recipeTitle} ingredients={mixEntries} nutrition={nutrition} />
         </ViewShot>
       </ScrollView>
 
