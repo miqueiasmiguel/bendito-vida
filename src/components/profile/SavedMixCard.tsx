@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { INGREDIENTS } from '@/data/ingredients';
 import { colors, radii, spacing, typography } from '@/theme';
@@ -7,6 +7,7 @@ import type { Mix } from '@/types/database';
 
 export interface SavedMixCardProps {
   mix: Mix;
+  onPress?: () => void;
 }
 
 function formatDate(isoString: string): string {
@@ -18,7 +19,7 @@ function formatDate(isoString: string): string {
   }).format(date);
 }
 
-export function SavedMixCard({ mix }: SavedMixCardProps) {
+export function SavedMixCard({ mix, onPress }: SavedMixCardProps) {
   const formattedDate = formatDate(mix.created_at);
 
   const ingredientNames = mix.ingredients
@@ -30,10 +31,12 @@ export function SavedMixCard({ mix }: SavedMixCardProps) {
   const ingredientText = extra > 0 ? `${displayed.join(', ')} +${extra}` : displayed.join(', ');
 
   return (
-    <View
+    <TouchableOpacity
       style={styles.card}
+      onPress={onPress}
+      disabled={!onPress}
       accessibilityLabel={`Mix ${mix.name}, criado em ${formattedDate}`}
-      accessibilityRole="none"
+      accessibilityRole="button"
     >
       <View style={styles.header}>
         <Text style={styles.name} numberOfLines={1}>
@@ -56,7 +59,7 @@ export function SavedMixCard({ mix }: SavedMixCardProps) {
           <Text style={styles.badgeText}>{mix.nutrition.protein}g proteína</Text>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 
