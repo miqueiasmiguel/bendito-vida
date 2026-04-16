@@ -16,6 +16,8 @@ const useAnimatedStyle = (fn) => {
 const withTiming = (value) => value;
 const withSpring = (value) => value;
 const withDelay = (_delay, value) => value;
+const withSequence = (...values) => values[values.length - 1];
+const interpolateColor = (_value, _inputRange, outputRange) => outputRange[0];
 
 const Animated = {
   View: 'View',
@@ -34,6 +36,8 @@ module.exports = {
   withTiming,
   withSpring,
   withDelay,
+  withSequence,
+  interpolateColor,
   Easing: { out: (fn) => fn, linear: (t) => t, ease: (t) => t, cubic: (t) => t * t * t },
   runOnJS: (fn) => fn,
   runOnUI: (fn) => fn,

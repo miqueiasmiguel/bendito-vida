@@ -1,5 +1,7 @@
 import { act, renderHook } from '@testing-library/react-native';
 
+import type { Profile } from '@/types/database';
+
 import { useProfileStore } from '../useProfileStore';
 
 // Mock Supabase client
@@ -108,6 +110,59 @@ describe('useProfileStore', () => {
       expect(result.current.error).toBe('Falha na conexão');
       expect(result.current.mixes).toHaveLength(0);
       expect(result.current.profile).toBeNull();
+    });
+  });
+
+  describe('updateName', () => {
+    it('atualiza profile.name no estado local em caso de sucesso', async () => {
+      const profileData = {
+        id: 'user-1',
+        name: 'Nome Antigo',
+        onboarding_completed: true,
+        bioactive_profile: null,
+        created_at: '2025-01-15T00:00:00Z',
+        updated_at: '2025-01-15T00:00:00Z',
+      };
+
+      act(() => {
+        useProfileStore.setState({ profile: profileData as unknown as Profile });
+      });
+
+      const updateChain: Record<string, unknown> = {};
+      ['update', 'eq'].forEach((m) => {
+        updateChain[m] = jest.fn(() => updateChain);
+      });
+      (updateChain['eq'] as jest.Mock).mockResolvedValue({ error: null });
+
+      mockFrom.mockReturnValue(updateChain);
+
+      const { result } = renderHook(() => useProfileStore());
+
+      await act(async () => {
+        await result.current.updateName('user-1', 'Novo Nome');
+      });
+
+      expect(result.current.profile?.name).toBe('Novo Nome');
+    });
+
+    it('lança erro quando Supabase retorna erro', async () => {
+      const updateChain: Record<string, unknown> = {};
+      ['update', 'eq'].forEach((m) => {
+        updateChain[m] = jest.fn(() => updateChain);
+      });
+      (updateChain['eq'] as jest.Mock).mockResolvedValue({
+        error: { message: 'Permissão negada' },
+      });
+
+      mockFrom.mockReturnValue(updateChain);
+
+      const { result } = renderHook(() => useProfileStore());
+
+      await expect(
+        act(async () => {
+          await result.current.updateName('user-1', 'Novo Nome');
+        }),
+      ).rejects.toThrow('Permissão negada');
     });
   });
 });

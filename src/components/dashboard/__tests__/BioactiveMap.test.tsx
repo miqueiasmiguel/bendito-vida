@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 
 import type { Ingredient } from '@/data/ingredients';
@@ -131,5 +131,58 @@ describe('BioactiveMap', () => {
     );
     expect(queryByText('Ingrediente 5')).toBeNull();
     expect(queryByText('Ingrediente 6')).toBeNull();
+  });
+
+  // Context menu — three-dot button
+  it('renders the three-dot menu button', () => {
+    const { getByLabelText } = render(
+      <BioactiveMap topNutrients={nutrients} recommendedIngredients={[]} />,
+    );
+    expect(getByLabelText('Opções do Mapa Bioativo')).toBeTruthy();
+  });
+
+  it('renders the three-dot menu button in empty state too', () => {
+    const { getByLabelText } = render(
+      <BioactiveMap topNutrients={[]} recommendedIngredients={[]} />,
+    );
+    expect(getByLabelText('Opções do Mapa Bioativo')).toBeTruthy();
+  });
+
+  it('opens modal with "Refazer quiz" and "Cancelar" when menu button is pressed', () => {
+    const { getByLabelText, getByText } = render(
+      <BioactiveMap topNutrients={nutrients} recommendedIngredients={[]} />,
+    );
+    fireEvent.press(getByLabelText('Opções do Mapa Bioativo'));
+    expect(getByText('Refazer quiz')).toBeTruthy();
+    expect(getByText('Cancelar')).toBeTruthy();
+  });
+
+  it('calls onRetakeQuiz when "Refazer quiz" is pressed', () => {
+    const onRetakeQuiz = jest.fn();
+    const { getByLabelText } = render(
+      <BioactiveMap
+        topNutrients={nutrients}
+        recommendedIngredients={[]}
+        onRetakeQuiz={onRetakeQuiz}
+      />,
+    );
+    fireEvent.press(getByLabelText('Opções do Mapa Bioativo'));
+    fireEvent.press(getByLabelText('Refazer quiz'));
+    expect(onRetakeQuiz).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes modal without calling onRetakeQuiz when "Cancelar" is pressed', () => {
+    const onRetakeQuiz = jest.fn();
+    const { getByLabelText, queryByText } = render(
+      <BioactiveMap
+        topNutrients={nutrients}
+        recommendedIngredients={[]}
+        onRetakeQuiz={onRetakeQuiz}
+      />,
+    );
+    fireEvent.press(getByLabelText('Opções do Mapa Bioativo'));
+    fireEvent.press(getByLabelText('Cancelar'));
+    expect(onRetakeQuiz).not.toHaveBeenCalled();
+    expect(queryByText('Refazer quiz')).toBeNull();
   });
 });
