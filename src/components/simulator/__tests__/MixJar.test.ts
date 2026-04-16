@@ -1,56 +1,81 @@
-import { colors } from '@/theme';
+import { computeLayerRects } from '../MixJar';
 
-import { computeGradientStops } from '../MixJar';
-
-describe('computeGradientStops', () => {
-  it('returns neutral-200 stops for empty fillStops', () => {
-    const stops = computeGradientStops([]);
-    expect(stops).toEqual([
-      { offset: '0', color: colors.neutral[200] },
-      { offset: '1', color: colors.neutral[200] },
-    ]);
+describe('computeLayerRects', () => {
+  it('returns empty array for empty fillStops', () => {
+    const layers = computeLayerRects([], 0.5);
+    expect(layers).toEqual([]);
   });
 
-  it('returns neutral-200 stops when total weight is 0', () => {
-    const stops = computeGradientStops([{ color: '#FF0000', weight: 0 }]);
-    expect(stops).toEqual([
-      { offset: '0', color: colors.neutral[200] },
-      { offset: '1', color: colors.neutral[200] },
-    ]);
+  it('returns empty array when total weight is 0', () => {
+    const layers = computeLayerRects([{ color: '#FF0000', weight: 0 }], 0.5);
+    expect(layers).toEqual([]);
   });
 
-  it('spans the full gradient (0 to 1) for a single ingredient', () => {
-    const stops = computeGradientStops([{ color: '#FF0000', weight: 100 }]);
-    expect(stops).toEqual([
-      { offset: '0', color: '#FF0000' },
-      { offset: '1', color: '#FF0000' },
-    ]);
+  it('returns empty array when fillLevel is 0', () => {
+    const layers = computeLayerRects([{ color: '#FF0000', weight: 100 }], 0);
+    expect(layers).toEqual([]);
   });
 
-  it('splits gradient proportionally for two ingredients', () => {
-    const stops = computeGradientStops([
-      { color: '#FF0000', weight: 30 },
-      { color: '#0000FF', weight: 60 },
-    ]);
-    // A covers 0 to 30/90 ≈ 0.333; B covers 0.333 to 1
-    expect(stops[0]).toEqual({ offset: '0', color: '#FF0000' });
-    expect(stops[1].color).toBe('#FF0000');
-    expect(parseFloat(stops[1].offset)).toBeCloseTo(1 / 3, 2);
-    expect(stops[2].color).toBe('#0000FF');
-    expect(parseFloat(stops[2].offset)).toBeCloseTo(1 / 3, 2);
-    expect(stops[3]).toEqual({ offset: '1', color: '#0000FF' });
+  it('returns a single layer for one ingredient', () => {
+    const layers = computeLayerRects([{ color: '#FF0000', weight: 100 }], 0.5);
+    expect(layers).toHaveLength(1);
+    expect(layers[0].color).toBe('#FF0000');
+    expect(layers[0].height).toBeGreaterThan(0);
+    expect(layers[0].opacity).toBe(1.0);
   });
 
-  it('produces 2*N stops for N ingredients', () => {
-    const stops = computeGradientStops([
-      { color: '#FF0000', weight: 30 },
-      { color: '#00FF00', weight: 30 },
-      { color: '#0000FF', weight: 30 },
-    ]);
-    expect(stops).toHaveLength(6);
-    // First segment starts at 0
-    expect(stops[0].offset).toBe('0');
-    // Last segment ends at 1
-    expect(stops[5].offset).toBe('1');
+  it('returns proportional layers for two ingredients', () => {
+    const layers = computeLayerRects(
+      [
+        { color: '#FF0000', weight: 30 },
+        { color: '#0000FF', weight: 60 },
+      ],
+      1.0,
+    );
+    expect(layers).toHaveLength(2);
+    // First ingredient (30/90 = 1/3 of total)
+    expect(layers[0].color).toBe('#FF0000');
+    // Second ingredient (60/90 = 2/3 of total)
+    expect(layers[1].color).toBe('#0000FF');
+    // Second layer should be roughly twice the height of first
+    expect(layers[1].height / layers[0].height).toBeCloseTo(2, 1);
+  });
+
+  it('stacks layers from bottom to top (first ingredient at bottom)', () => {
+    const layers = computeLayerRects(
+      [
+        { color: '#FF0000', weight: 50 },
+        { color: '#00FF00', weight: 50 },
+      ],
+      1.0,
+    );
+    // Bottom layer has higher y value (lower on screen)
+    expect(layers[0].y).toBeGreaterThan(layers[1].y);
+  });
+
+  it('produces N layers for N ingredients', () => {
+    const layers = computeLayerRects(
+      [
+        { color: '#FF0000', weight: 30 },
+        { color: '#00FF00', weight: 30 },
+        { color: '#0000FF', weight: 30 },
+      ],
+      0.8,
+    );
+    expect(layers).toHaveLength(3);
+  });
+
+  it('alternates opacity for visual texture', () => {
+    const layers = computeLayerRects(
+      [
+        { color: '#FF0000', weight: 30 },
+        { color: '#00FF00', weight: 30 },
+        { color: '#0000FF', weight: 30 },
+      ],
+      1.0,
+    );
+    expect(layers[0].opacity).toBe(1.0);
+    expect(layers[1].opacity).toBe(0.88);
+    expect(layers[2].opacity).toBe(1.0);
   });
 });

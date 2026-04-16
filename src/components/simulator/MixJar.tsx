@@ -1,18 +1,37 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedProps, useSharedValue, withTiming } from 'react-native-reanimated';
-import { ClipPath, Defs, G, LinearGradient, Path, Rect, Stop, Svg } from 'react-native-svg';
+import { ClipPath, Defs, G, Line, Path, Rect, Svg } from 'react-native-svg';
 
 import { colors } from '@/theme';
 
 const AnimatedRect = Animated.createAnimatedComponent(Rect);
 
-const JAR_WIDTH = 140;
-const JAR_HEIGHT = 180;
-const JAR_NECK_WIDTH = 80;
-const JAR_BODY_WIDTH = 130;
-const LIQUID_MAX_HEIGHT = 140; // max fill area (excluding jar walls top/bottom)
-const LIQUID_Y_BOTTOM = 160; // y coordinate of liquid bottom edge
+// New jar dimensions (task 1.1)
+const JAR_WIDTH = 180;
+const JAR_HEIGHT = 220;
+const SVG_HEIGHT = JAR_HEIGHT + 30; // extra space for lid
+
+// Jar body geometry
+const BODY_WIDTH = 160;
+const BODY_LEFT = (JAR_WIDTH - BODY_WIDTH) / 2; // 10
+const BODY_RIGHT = BODY_LEFT + BODY_WIDTH; // 170
+const BODY_TOP = 65;
+const BODY_BOTTOM = 215;
+const BODY_RADIUS = 16;
+
+// Neck geometry
+const NECK_WIDTH = 80;
+const NECK_LEFT = (JAR_WIDTH - NECK_WIDTH) / 2; // 50
+const NECK_RIGHT = NECK_LEFT + NECK_WIDTH; // 130
+
+// Liquid fill area
+const LIQUID_Y_TOP = BODY_TOP + 2;
+const LIQUID_Y_BOTTOM = BODY_BOTTOM - 2;
+const LIQUID_MAX_HEIGHT = LIQUID_Y_BOTTOM - LIQUID_Y_TOP;
+const LIQUID_X_LEFT = BODY_LEFT + 2;
+const LIQUID_X_RIGHT = BODY_RIGHT - 2;
+const LIQUID_WIDTH = LIQUID_X_RIGHT - LIQUID_X_LEFT;
 
 export interface FillStop {
   color: string;
@@ -24,95 +43,107 @@ export interface MixJarProps {
   fillStops: FillStop[];
 }
 
-interface GradientStop {
-  offset: string;
+export interface LayerRect {
+  y: number;
+  height: number;
   color: string;
+  opacity: number;
 }
 
-export function computeGradientStops(fillStops: FillStop[]): GradientStop[] {
-  const total = fillStops.reduce((sum, s) => sum + s.weight, 0);
-
-  if (fillStops.length === 0 || total === 0) {
-    return [
-      { offset: '0', color: colors.neutral[200] },
-      { offset: '1', color: colors.neutral[200] },
-    ];
+export function computeLayerRects(fillStops: FillStop[], fillLevel: number): LayerRect[] {
+  const totalWeight = fillStops.reduce((sum, s) => sum + s.weight, 0);
+  if (fillStops.length === 0 || totalWeight === 0 || fillLevel === 0) {
+    return [];
   }
 
-  const result: GradientStop[] = [];
-  let accumulated = 0;
+  const fillHeight = fillLevel * LIQUID_MAX_HEIGHT;
+  const layers: LayerRect[] = [];
+  let currentY = LIQUID_Y_BOTTOM;
 
-  for (const stop of fillStops) {
-    const start = accumulated / total;
-    const end = (accumulated + stop.weight) / total;
-    result.push({ offset: String(Math.round(start * 1000) / 1000), color: stop.color });
-    result.push({ offset: String(Math.round(end * 1000) / 1000), color: stop.color });
-    accumulated += stop.weight;
+  for (let i = 0; i < fillStops.length; i++) {
+    const stop = fillStops[i];
+    const proportion = stop.weight / totalWeight;
+    const layerHeight = proportion * fillHeight;
+    const y = currentY - layerHeight;
+    // Alternate subtle opacity for texture
+    const opacity = i % 2 === 0 ? 1.0 : 0.88;
+    layers.push({ y, height: layerHeight, color: stop.color, opacity });
+    currentY = y;
   }
 
-  return result;
+  return layers;
+}
+
+/** Animated single layer rect — animates y and height via Reanimated 4 (task 2.4) */
+function AnimatedLayer({ layer }: { layer: LayerRect }) {
+  const animY = useSharedValue(layer.y);
+  const animH = useSharedValue(layer.height);
+
+  React.useEffect(() => {
+    animY.value = withTiming(layer.y, { duration: 300 });
+    animH.value = withTiming(layer.height, { duration: 300 });
+  }, [layer.y, layer.height, animY, animH]);
+
+  const props = useAnimatedProps(() => ({
+    y: animY.value,
+    height: animH.value,
+  }));
+
+  return (
+    <AnimatedRect
+      x={LIQUID_X_LEFT}
+      width={LIQUID_WIDTH}
+      fill={layer.color}
+      opacity={layer.opacity}
+      animatedProps={props}
+    />
+  );
 }
 
 export function MixJar({ fillLevel, fillStops }: MixJarProps) {
-  const animatedFill = useSharedValue(fillLevel);
+  // Build layer rects
+  const layers = computeLayerRects(fillStops, fillLevel);
 
-  React.useEffect(() => {
-    animatedFill.value = withTiming(fillLevel, { duration: 300 });
-  }, [fillLevel, animatedFill]);
-
-  const animatedProps = useAnimatedProps(() => {
-    const liquidHeight = animatedFill.value * LIQUID_MAX_HEIGHT;
-    return {
-      height: liquidHeight,
-      y: LIQUID_Y_BOTTOM - liquidHeight,
-    };
-  });
-
-  // Jar shape: body + neck + lid area
-  // Centered at x=70
-  const bodyLeft = (JAR_WIDTH - JAR_BODY_WIDTH) / 2;
-  const neckLeft = (JAR_WIDTH - JAR_NECK_WIDTH) / 2;
-
-  // Jar outline path (rough mason jar silhouette)
+  // Mason-jar silhouette (task 1.1): body with rounded bottom, shoulder curve, neck with thread lines, detailed lid
   const jarPath = [
-    `M ${neckLeft} 20`,
-    `L ${neckLeft} 35`,
-    `Q ${neckLeft - 10} 45 ${bodyLeft} 55`,
-    `L ${bodyLeft} ${LIQUID_Y_BOTTOM}`,
-    `Q ${bodyLeft} ${LIQUID_Y_BOTTOM + 12} ${bodyLeft + 10} ${LIQUID_Y_BOTTOM + 12}`,
-    `L ${bodyLeft + JAR_BODY_WIDTH - 10} ${LIQUID_Y_BOTTOM + 12}`,
-    `Q ${bodyLeft + JAR_BODY_WIDTH} ${LIQUID_Y_BOTTOM + 12} ${bodyLeft + JAR_BODY_WIDTH} ${LIQUID_Y_BOTTOM}`,
-    `L ${bodyLeft + JAR_BODY_WIDTH} 55`,
-    `Q ${neckLeft + JAR_NECK_WIDTH + 10} 45 ${neckLeft + JAR_NECK_WIDTH} 35`,
-    `L ${neckLeft + JAR_NECK_WIDTH} 20`,
+    // Start at neck top-left
+    `M ${NECK_LEFT} 40`,
+    // Neck left side
+    `L ${NECK_LEFT} 52`,
+    // Shoulder curve left (neck → body)
+    `Q ${NECK_LEFT - 15} 58 ${BODY_LEFT} ${BODY_TOP}`,
+    // Body left side
+    `L ${BODY_LEFT} ${BODY_BOTTOM - BODY_RADIUS}`,
+    // Bottom-left curve
+    `Q ${BODY_LEFT} ${BODY_BOTTOM} ${BODY_LEFT + BODY_RADIUS} ${BODY_BOTTOM}`,
+    // Bottom edge
+    `L ${BODY_RIGHT - BODY_RADIUS} ${BODY_BOTTOM}`,
+    // Bottom-right curve
+    `Q ${BODY_RIGHT} ${BODY_BOTTOM} ${BODY_RIGHT} ${BODY_BOTTOM - BODY_RADIUS}`,
+    // Body right side
+    `L ${BODY_RIGHT} ${BODY_TOP}`,
+    // Shoulder curve right (body → neck)
+    `Q ${NECK_RIGHT + 15} 58 ${NECK_RIGHT} 52`,
+    // Neck right side
+    `L ${NECK_RIGHT} 40`,
     `Z`,
   ].join(' ');
 
-  // Clip path for liquid (same shape as jar interior)
+  // Clip path for liquid (task 1.3): matches jar interior
   const clipPath = [
-    `M ${bodyLeft + 2} 55`,
-    `L ${bodyLeft + 2} ${LIQUID_Y_BOTTOM}`,
-    `L ${bodyLeft + JAR_BODY_WIDTH - 2} ${LIQUID_Y_BOTTOM}`,
-    `L ${bodyLeft + JAR_BODY_WIDTH - 2} 55`,
+    `M ${LIQUID_X_LEFT} ${BODY_TOP}`,
+    `L ${LIQUID_X_LEFT} ${LIQUID_Y_BOTTOM}`,
+    `Q ${LIQUID_X_LEFT} ${BODY_BOTTOM - 4} ${LIQUID_X_LEFT + 14} ${BODY_BOTTOM - 4}`,
+    `L ${LIQUID_X_RIGHT - 14} ${BODY_BOTTOM - 4}`,
+    `Q ${LIQUID_X_RIGHT} ${BODY_BOTTOM - 4} ${LIQUID_X_RIGHT} ${LIQUID_Y_BOTTOM}`,
+    `L ${LIQUID_X_RIGHT} ${BODY_TOP}`,
     `Z`,
   ].join(' ');
-
-  const gradientStops = computeGradientStops(fillStops);
 
   return (
     <View style={styles.container} accessibilityLabel="Jarro com ingredientes selecionados">
-      <Svg width={JAR_WIDTH} height={JAR_HEIGHT + 20}>
+      <Svg width={JAR_WIDTH} height={SVG_HEIGHT}>
         <Defs>
-          <LinearGradient id="liquidGrad" x1="0" y1="1" x2="0" y2="0">
-            {gradientStops.map((stop, index) => (
-              <Stop
-                key={`${stop.color}-${stop.offset}-${index}`}
-                offset={stop.offset}
-                stopColor={stop.color}
-                stopOpacity="0.9"
-              />
-            ))}
-          </LinearGradient>
           <ClipPath id="jarBodyClip">
             <Path d={clipPath} />
           </ClipPath>
@@ -121,35 +152,86 @@ export function MixJar({ fillLevel, fillStops }: MixJarProps) {
         {/* Jar body fill (white) */}
         <Path d={jarPath} fill={colors.white} stroke="none" />
 
-        {/* Liquid fill (animated, clipped to jar interior) */}
+        {/* Stacked layer Rects (tasks 2.1-2.4), clipped to jar interior */}
         <G clipPath="url(#jarBodyClip)">
-          <AnimatedRect
-            x={bodyLeft + 2}
-            width={JAR_BODY_WIDTH - 4}
-            fill="url(#liquidGrad)"
-            animatedProps={animatedProps}
-          />
+          {layers.map((layer, index) => (
+            <React.Fragment key={`layer-${index}-${layer.color}`}>
+              <AnimatedLayer layer={layer} />
+              {/* Separator line between layers (task 2.3) */}
+              {index > 0 && (
+                <Line
+                  x1={LIQUID_X_LEFT}
+                  y1={layer.y + layer.height}
+                  x2={LIQUID_X_RIGHT}
+                  y2={layer.y + layer.height}
+                  stroke="white"
+                  strokeWidth={1}
+                  opacity={0.2}
+                />
+              )}
+            </React.Fragment>
+          ))}
         </G>
 
         {/* Jar outline */}
         <Path d={jarPath} fill="none" stroke={colors.neutral[200]} strokeWidth={2} />
 
-        {/* Lid */}
+        {/* Thread lines on neck (task 1.1) */}
+        <Line
+          x1={NECK_LEFT}
+          y1={44}
+          x2={NECK_RIGHT}
+          y2={44}
+          stroke={colors.neutral[200]}
+          strokeWidth={1}
+          opacity={0.5}
+        />
+        <Line
+          x1={NECK_LEFT}
+          y1={48}
+          x2={NECK_RIGHT}
+          y2={48}
+          stroke={colors.neutral[200]}
+          strokeWidth={1}
+          opacity={0.4}
+        />
+
+        {/* Lid — main cap */}
         <Rect
-          x={neckLeft - 4}
-          y={12}
-          width={JAR_NECK_WIDTH + 8}
-          height={10}
-          rx={3}
+          x={NECK_LEFT - 6}
+          y={28}
+          width={NECK_WIDTH + 12}
+          height={14}
+          rx={4}
           fill={colors.primary[700]}
         />
+        {/* Lid — top knob with texture */}
         <Rect
-          x={neckLeft + 2}
-          y={8}
-          width={JAR_NECK_WIDTH - 4}
-          height={6}
-          rx={2}
+          x={NECK_LEFT + 4}
+          y={22}
+          width={NECK_WIDTH - 8}
+          height={8}
+          rx={3}
           fill={colors.primary[500]}
+        />
+        {/* Lid texture lines */}
+        <Line
+          x1={NECK_LEFT - 2}
+          y1={33}
+          x2={NECK_RIGHT + 2}
+          y2={33}
+          stroke={colors.primary[500]}
+          strokeWidth={0.8}
+          opacity={0.4}
+        />
+        <Line
+          x1={NECK_LEFT - 2}
+          y1={37}
+          x2={NECK_RIGHT + 2}
+          y2={37}
+          stroke={colors.primary[500]}
+          strokeWidth={0.8}
+          opacity={0.3}
         />
       </Svg>
     </View>
