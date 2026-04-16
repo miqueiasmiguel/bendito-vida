@@ -1,4 +1,4 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: Exibir identidade do usuário
 A tela de Perfil SHALL exibir um avatar circular com a inicial do nome do usuário, o nome completo e a data de cadastro formatada ("Membro desde mês/ano"). O avatar SHALL ser exibido no header da tela com fundo `primary-700`.
@@ -14,7 +14,7 @@ A tela de Perfil SHALL exibir um avatar circular com a inicial do nome do usuár
 ---
 
 ### Requirement: Mapa Bioativo no Perfil
-A tela de Perfil SHALL exibir o componente `BioactiveMap` (radar chart) com as mesmas props e comportamento da tela Home — `topNutrients`, `recommendedIngredients` e `onQuizPress`. O antigo componente `BioactiveSummary` foi removido da tela de Perfil.
+A tela de Perfil SHALL exibir o componente `BioactiveMap` (radar chart) com as mesmas props e comportamento da tela Home — `topNutrients`, `recommendedIngredients` e `onQuizPress`. O antigo componente `BioactiveSummary` SHALL ser removido da tela de Perfil.
 
 #### Scenario: Quiz concluído
 - **WHEN** `useQuizStore.nutritionProfile` está disponível
@@ -40,7 +40,7 @@ A tela de Perfil SHALL exibir dois cards de estatísticas calculados localmente:
 ---
 
 ### Requirement: Navegação para sub-telas a partir do Perfil
-A tela de Perfil SHALL exibir dois itens de navegação em forma de cards/rows: "Meus Mixes" (navega para `/(tabs)/profile/my-mixes`) e "Configurações" (navega para `/(tabs)/profile/settings`). Cada item SHALL ter ícone Lucide à esquerda e chevron à direita. O layout da aba Profile (`_layout.tsx`) SHALL escutar o evento `tabPress` da tab bar e executar `router.replace('/(tabs)/profile')`, garantindo que pressionar a aba Profile sempre retorne ao hub de Perfil independentemente da sub-tela atual na stack.
+A tela de Perfil SHALL exibir dois itens de navegação em forma de cards/rows: "Meus Mixes" (navega para `/(tabs)/profile/my-mixes`) e "Configurações" (navega para `/(tabs)/profile/settings`). Cada item SHALL ter ícone Lucide à esquerda e chevron à direita.
 
 #### Scenario: Toque em "Meus Mixes"
 - **WHEN** o usuário toca o item "Meus Mixes"
@@ -50,19 +50,14 @@ A tela de Perfil SHALL exibir dois itens de navegação em forma de cards/rows: 
 - **WHEN** o usuário toca o item "Configurações"
 - **THEN** o sistema navega para `/(tabs)/profile/settings`
 
-#### Scenario: Toque na tab Profile com sub-tela ativa
-- **WHEN** o usuário está em `/(tabs)/profile/my-mixes` (ou qualquer sub-tela) e toca na aba "Perfil" da tab bar
-- **THEN** o sistema navega para `/(tabs)/profile` (hub principal de Perfil), descartando a sub-tela da stack
-
 ---
 
-### Requirement: Store de perfil (`useProfileStore`)
-O sistema SHALL disponibilizar um store Zustand `useProfileStore` que encapsula fetch de `profiles` e `mixes` do Supabase (tabelas definidas em `0001_initial_schema.sql`), expondo `profile`, `mixes`, `isLoading`, `error` e `updateName`. O tipo `Profile` SHALL incluir os campos: `id`, `name`, `onboarding_completed`, `bioactive_profile`, `created_at`, `updated_at`. O tipo `Mix` SHALL incluir: `id`, `user_id`, `name`, `ingredients` (string[]), `nutrition` (objeto com `calories`, `fiber`, `protein`, `omega3`), `created_at`.
+## REMOVED Requirements
 
-#### Scenario: Fetch bem-sucedido
-- **WHEN** `fetchProfile(userId)` é chamado
-- **THEN** o store popula `profile` com dados de `profiles` e `mixes` com dados da tabela `mixes` ordenados por `created_at desc`
+### Requirement: Listar mixes salvos
+**Reason**: A listagem de mixes foi extraída para a sub-tela dedicada `/(tabs)/profile/my-mixes` para desafogar o hub de Perfil e permitir expansão futura.
+**Migration**: Usar `/(tabs)/profile/my-mixes` para acessar a lista de mixes. O `useProfileStore` continua sendo a fonte de dados.
 
-#### Scenario: Fetch com erro
-- **WHEN** a query ao Supabase retorna erro
-- **THEN** o store define `error` com a mensagem e mantém `mixes` como array vazio
+### Requirement: Logout do usuário
+**Reason**: A ação de logout foi movida para a sub-tela "Configurações" (`/(tabs)/profile/settings`), agrupada com demais ações destrutivas/de conta.
+**Migration**: Usar `/(tabs)/profile/settings` para acessar o botão de logout.
