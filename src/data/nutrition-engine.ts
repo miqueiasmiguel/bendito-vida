@@ -17,6 +17,20 @@ const CALORIE_WARN = 500;
 const FIBER_LOW = 5;
 const OMEGA3_LOW_FOCUS = 2;
 
+export function calculateNutritionFromMix(
+  mixItems: Record<string, { ingredient: Ingredient; grams: number }>,
+): NutritionSummary {
+  return Object.values(mixItems).reduce(
+    (acc, { ingredient, grams }) => ({
+      calories: acc.calories + (ingredient.nutrition.calories * grams) / 100,
+      fiber: acc.fiber + (ingredient.nutrition.fiber * grams) / 100,
+      protein: acc.protein + (ingredient.nutrition.protein * grams) / 100,
+      omega3: acc.omega3 + (ingredient.nutrition.omega3 * grams) / 100,
+    }),
+    { calories: 0, fiber: 0, protein: 0, omega3: 0 },
+  );
+}
+
 export function calculateNutrition(selected: Ingredient[]): NutritionSummary {
   return selected.reduce(
     (acc, ing) => ({

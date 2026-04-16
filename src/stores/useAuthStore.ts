@@ -51,17 +51,20 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
         onboardingChecked: false,
       });
 
-      // Fetch onboarding flag and bioactive profile — detached so it never blocks session resolution
+      // Fetch onboarding flag, bioactive profile and display name — detached so it never blocks session resolution
       supabase
         .from('profiles')
-        .select('onboarding_completed, bioactive_profile')
+        .select('onboarding_completed, bioactive_profile, name')
         .eq('id', id)
         .single()
         .then(({ data }) => {
-          set({
+          set((state) => ({
+            user: state.user
+              ? { ...state.user, name: (data?.name as string | null) ?? state.user.name }
+              : state.user,
             onboardingCompleted: data?.onboarding_completed ?? false,
             onboardingChecked: true,
-          });
+          }));
           // Hydrate quiz store with persisted profile so bioactive map survives restarts.
           // One-way dependency: auth bootstraps quiz state at startup.
           if (data?.bioactive_profile) {

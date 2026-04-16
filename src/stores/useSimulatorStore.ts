@@ -2,44 +2,51 @@ import { create } from 'zustand';
 
 import type { Ingredient } from '@/data/ingredients';
 
+export interface MixItem {
+  ingredient: Ingredient;
+  grams: number;
+}
+
 interface SimulatorState {
-  selectedIngredients: Ingredient[];
+  mixItems: Record<string, MixItem>;
 }
 
 interface SimulatorActions {
-  addIngredient: (ingredient: Ingredient) => void;
-  removeIngredient: (ingredientId: string) => void;
-  toggleIngredient: (ingredient: Ingredient) => void;
+  addGrams: (ingredient: Ingredient, amount: number) => void;
+  removeIngredient: (id: string) => void;
   clearMix: () => void;
+  resetMix: () => void;
 }
 
 const initialState: SimulatorState = {
-  selectedIngredients: [],
+  mixItems: {},
 };
 
 export const useSimulatorStore = create<SimulatorState & SimulatorActions>((set) => ({
   ...initialState,
 
-  addIngredient: (ingredient) =>
-    set((state) => ({
-      selectedIngredients: [...state.selectedIngredients, ingredient],
-    })),
-
-  removeIngredient: (ingredientId) =>
-    set((state) => ({
-      selectedIngredients: state.selectedIngredients.filter((i) => i.id !== ingredientId),
-    })),
-
-  toggleIngredient: (ingredient) =>
+  addGrams: (ingredient, amount) =>
     set((state) => {
-      const isSelected = state.selectedIngredients.some((i) => i.id === ingredient.id);
-      if (isSelected) {
-        return {
-          selectedIngredients: state.selectedIngredients.filter((i) => i.id !== ingredient.id),
-        };
-      }
-      return { selectedIngredients: [...state.selectedIngredients, ingredient] };
+      const existing = state.mixItems[ingredient.id];
+      return {
+        mixItems: {
+          ...state.mixItems,
+          [ingredient.id]: {
+            ingredient,
+            grams: (existing?.grams ?? 0) + amount,
+          },
+        },
+      };
     }),
 
-  clearMix: () => set(initialState),
+  removeIngredient: (id) =>
+    set((state) => {
+      const rest = { ...state.mixItems };
+      delete rest[id];
+      return { mixItems: rest };
+    }),
+
+  clearMix: () => set({ mixItems: {} }),
+
+  resetMix: () => set({ mixItems: {} }),
 }));

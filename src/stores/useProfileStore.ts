@@ -9,6 +9,7 @@ interface ProfileStore {
   isLoading: boolean;
   error: string | null;
   fetchProfile: (userId: string) => Promise<void>;
+  updateName: (userId: string, name: string) => Promise<void>;
   reset: () => void;
 }
 
@@ -50,6 +51,14 @@ export const useProfileStore = create<ProfileStore>((set) => ({
       isLoading: false,
       error: null,
     });
+  },
+
+  updateName: async (userId: string, name: string): Promise<void> => {
+    const { error } = await supabase.from('profiles').update({ name }).eq('id', userId);
+    if (error) throw new Error(error.message);
+    set((state) => ({
+      profile: state.profile ? { ...state.profile, name } : null,
+    }));
   },
 
   reset: () => set(initialState),
