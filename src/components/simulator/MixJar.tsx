@@ -14,12 +14,46 @@ const JAR_BODY_WIDTH = 130;
 const LIQUID_MAX_HEIGHT = 140; // max fill area (excluding jar walls top/bottom)
 const LIQUID_Y_BOTTOM = 160; // y coordinate of liquid bottom edge
 
-export interface MixJarProps {
-  fillLevel: number; // 0–1
-  fillColor: string;
+export interface FillStop {
+  color: string;
+  weight: number;
 }
 
-export function MixJar({ fillLevel, fillColor }: MixJarProps) {
+export interface MixJarProps {
+  fillLevel: number; // 0–1
+  fillStops: FillStop[];
+}
+
+interface GradientStop {
+  offset: string;
+  color: string;
+}
+
+export function computeGradientStops(fillStops: FillStop[]): GradientStop[] {
+  const total = fillStops.reduce((sum, s) => sum + s.weight, 0);
+
+  if (fillStops.length === 0 || total === 0) {
+    return [
+      { offset: '0', color: colors.neutral[200] },
+      { offset: '1', color: colors.neutral[200] },
+    ];
+  }
+
+  const result: GradientStop[] = [];
+  let accumulated = 0;
+
+  for (const stop of fillStops) {
+    const start = accumulated / total;
+    const end = (accumulated + stop.weight) / total;
+    result.push({ offset: String(Math.round(start * 1000) / 1000), color: stop.color });
+    result.push({ offset: String(Math.round(end * 1000) / 1000), color: stop.color });
+    accumulated += stop.weight;
+  }
+
+  return result;
+}
+
+export function MixJar({ fillLevel, fillStops }: MixJarProps) {
   const animatedFill = useSharedValue(fillLevel);
 
   React.useEffect(() => {
@@ -63,13 +97,21 @@ export function MixJar({ fillLevel, fillColor }: MixJarProps) {
     `Z`,
   ].join(' ');
 
+  const gradientStops = computeGradientStops(fillStops);
+
   return (
     <View style={styles.container} accessibilityLabel="Jarro com ingredientes selecionados">
       <Svg width={JAR_WIDTH} height={JAR_HEIGHT + 20}>
         <Defs>
-          <LinearGradient id="liquidGrad" x1="0" y1="0" x2="1" y2="0">
-            <Stop offset="0" stopColor={fillColor} stopOpacity="0.85" />
-            <Stop offset="1" stopColor={fillColor} stopOpacity="0.6" />
+          <LinearGradient id="liquidGrad" x1="0" y1="1" x2="0" y2="0">
+            {gradientStops.map((stop, index) => (
+              <Stop
+                key={`${stop.color}-${stop.offset}-${index}`}
+                offset={stop.offset}
+                stopColor={stop.color}
+                stopOpacity="0.9"
+              />
+            ))}
           </LinearGradient>
           <ClipPath id="jarBodyClip">
             <Path d={clipPath} />

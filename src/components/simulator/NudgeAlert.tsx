@@ -24,19 +24,19 @@ export interface NudgeAlertProps {
 }
 
 export function NudgeAlert({ nudge, onDismiss }: NudgeAlertProps) {
-  const translateY = useSharedValue(60);
+  const translateY = useSharedValue(-60);
   const opacity = useSharedValue(0);
 
   useEffect(() => {
     if (!nudge) return;
 
-    // Slide up and fade in, hold, then fade out
-    translateY.value = 60;
+    // Slide down and fade in, hold, then fade out back up
+    translateY.value = -60;
     opacity.value = 0;
 
     translateY.value = withSequence(
       withTiming(0, { duration: 300 }),
-      withDelay(2700, withTiming(60, { duration: 300 })),
+      withDelay(2700, withTiming(-60, { duration: 300 })),
     );
 
     opacity.value = withSequence(
@@ -74,7 +74,7 @@ export function NudgeAlert({ nudge, onDismiss }: NudgeAlertProps) {
 const styles = StyleSheet.create({
   toast: {
     position: 'absolute',
-    bottom: 80,
+    top: spacing.lg,
     left: spacing.lg,
     right: spacing.lg,
     borderRadius: radii.input,
