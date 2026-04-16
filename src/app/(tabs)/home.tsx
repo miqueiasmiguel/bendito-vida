@@ -7,8 +7,8 @@ import { BioactiveMap } from '@/components/dashboard/BioactiveMap';
 import { DailyTip } from '@/components/dashboard/DailyTip';
 import type { CheckinValues } from '@/components/dashboard/WeeklyCheckinCard';
 import { WeeklyCheckinCard } from '@/components/dashboard/WeeklyCheckinCard';
-import { Button } from '@/components/ui';
 import { INGREDIENTS } from '@/data/ingredients';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { useProgressStore } from '@/stores/useProgressStore';
 import { useQuizStore } from '@/stores/useQuizStore';
 import { colors, spacing, typography } from '@/theme';
@@ -18,6 +18,7 @@ function getDailyTipIngredient() {
 }
 
 export default function HomeScreen() {
+  const user = useAuthStore((s) => s.user);
   const nutritionProfile = useQuizStore((s) => s.nutritionProfile);
   const checkins = useProgressStore((s) => s.checkins);
 
@@ -43,7 +44,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.greeting} accessibilityRole="header">
-          Olá!
+          {user?.name ? `Olá, ${user.name.split(' ')[0]}!` : 'Olá!'}
         </Text>
         <Text style={styles.subtitle}>Veja seu perfil nutricional de hoje.</Text>
 
@@ -52,18 +53,9 @@ export default function HomeScreen() {
             topNutrients={topNutrients}
             recommendedIngredients={recommendedIngredients}
             onQuizPress={() => router.push('/(onboarding)/quiz')}
+            onRetakeQuiz={() => router.push('/(onboarding)/quiz')}
           />
         </View>
-
-        {topNutrients.length > 0 && (
-          <View style={styles.section}>
-            <Button
-              variant="primary"
-              label="Montar meu Mix"
-              onPress={() => router.push('/(tabs)/simulator')}
-            />
-          </View>
-        )}
 
         <View style={styles.section}>
           <WeeklyCheckinCard

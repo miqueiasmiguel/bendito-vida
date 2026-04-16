@@ -1,6 +1,6 @@
-import { Leaf } from 'lucide-react-native';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Leaf, MoreVertical } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import type { Ingredient } from '@/data/ingredients';
 import type { NutrientTag } from '@/data/quiz-questions';
@@ -8,6 +8,8 @@ import { colors, radii, spacing, typography } from '@/theme';
 
 import { BioactiveRadarChart } from './BioactiveRadarChart';
 import type { RadarDataPoint } from './BioactiveRadarChart';
+
+const OVERLAY_BG = 'rgba(0, 0, 0, 0.4)';
 
 const NUTRIENT_SHORT: Record<NutrientTag, string> = {
   'vitamina-c': 'Vit. C',
@@ -40,17 +42,72 @@ export interface BioactiveMapProps {
   topNutrients: NutrientTag[];
   recommendedIngredients: Ingredient[];
   onQuizPress?: () => void;
+  onRetakeQuiz?: () => void;
 }
 
 export function BioactiveMap({
   topNutrients,
   recommendedIngredients,
   onQuizPress,
+  onRetakeQuiz,
 }: BioactiveMapProps) {
+  const [menuVisible, setMenuVisible] = useState(false);
+
+  function handleRetakeQuiz() {
+    setMenuVisible(false);
+    onRetakeQuiz?.();
+  }
+
+  const cardHeader = (
+    <View style={styles.cardHeader}>
+      <Text style={styles.cardTitle}>Mapa Bioativo</Text>
+      <TouchableOpacity
+        onPress={() => setMenuVisible(true)}
+        style={styles.menuButton}
+        accessibilityLabel="Opções do Mapa Bioativo"
+        accessibilityRole="button"
+      >
+        <MoreVertical size={20} color={colors.neutral[700]} strokeWidth={1.5} />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const contextMenu = (
+    <Modal
+      visible={menuVisible}
+      transparent
+      animationType="fade"
+      onRequestClose={() => setMenuVisible(false)}
+    >
+      <Pressable style={styles.overlay} onPress={() => setMenuVisible(false)}>
+        <View style={styles.menuSheet}>
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={handleRetakeQuiz}
+            accessibilityRole="button"
+            accessibilityLabel="Refazer quiz"
+          >
+            <Text style={styles.menuItemText}>Refazer quiz</Text>
+          </TouchableOpacity>
+          <View style={styles.menuDivider} />
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => setMenuVisible(false)}
+            accessibilityRole="button"
+            accessibilityLabel="Cancelar"
+          >
+            <Text style={styles.menuCancelText}>Cancelar</Text>
+          </TouchableOpacity>
+        </View>
+      </Pressable>
+    </Modal>
+  );
+
   if (topNutrients.length === 0) {
     return (
       <View style={styles.card} accessibilityLabel="Mapa Bioativo — quiz não concluído">
-        <Text style={styles.cardTitle}>Mapa Bioativo</Text>
+        {cardHeader}
+        {contextMenu}
         <Text style={styles.emptyText}>
           Complete o quiz para ver seus nutrientes prioritários e ingredientes recomendados.
         </Text>
@@ -73,7 +130,8 @@ export function BioactiveMap({
 
   return (
     <View style={styles.card} accessibilityLabel="Mapa Bioativo">
-      <Text style={styles.cardTitle}>Mapa Bioativo</Text>
+      {cardHeader}
+      {contextMenu}
 
       <View style={styles.chartSection}>
         <BioactiveRadarChart data={radarData} />
@@ -107,12 +165,20 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
   cardTitle: {
     fontFamily: typography.fontFamily.semiBold,
     fontSize: typography.fontSize.h3,
     lineHeight: typography.lineHeight.h3,
     color: colors.neutral[900],
-    marginBottom: spacing.md,
+  },
+  menuButton: {
+    padding: spacing.sm,
   },
   chartSection: {
     alignItems: 'center',
@@ -169,5 +235,37 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily.semiBold,
     fontSize: typography.fontSize.body,
     color: colors.primary[700],
+  },
+  // Context menu modal
+  overlay: {
+    flex: 1,
+    backgroundColor: OVERLAY_BG,
+    justifyContent: 'flex-end',
+  },
+  menuSheet: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: radii.card,
+    borderTopRightRadius: radii.card,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xl,
+  },
+  menuItem: {
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: colors.neutral[200],
+  },
+  menuItemText: {
+    fontFamily: typography.fontFamily.semiBold,
+    fontSize: typography.fontSize.body,
+    color: colors.primary[700],
+  },
+  menuCancelText: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.fontSize.body,
+    color: colors.neutral[700],
   },
 });
