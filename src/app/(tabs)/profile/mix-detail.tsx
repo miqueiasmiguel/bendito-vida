@@ -134,7 +134,7 @@ export default function MixDetailScreen() {
               value={omega3}
               unit="g"
               maxValue={BAR_MAX.omega3}
-              color="#B8860B"
+              color={colors.semantic.warning}
             />
             <NutrientBar
               label="Calorias"
