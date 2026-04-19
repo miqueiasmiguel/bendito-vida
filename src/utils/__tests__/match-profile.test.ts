@@ -82,4 +82,10 @@ describe('matchProfile', () => {
     const unique = new Set(ids);
     expect(ids.length).toBe(unique.size);
   });
+
+  it('ignores unknown option ids gracefully', () => {
+    const result = matchProfile({ q1: ['invalid-option-that-does-not-exist'] });
+    expect(result.topNutrients).toHaveLength(0);
+    expect(result.suggestedIngredients).toHaveLength(0);
+  });
 });
