@@ -38,7 +38,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
   // Keep callback synchronous — fire profile fetch as a detached promise so
   // sessionChecked is set immediately and never blocks the splash screen.
   supabase.auth.onAuthStateChange((event, session) => {
-    if (event === 'TOKEN_REFRESH_FAILED') {
+    if ((event as string) === 'TOKEN_REFRESH_FAILED') {
       supabase.auth.signOut();
       set({ user: null, sessionChecked: true, onboardingChecked: true });
       return;
@@ -77,7 +77,7 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
             useQuizStore.getState().setProfile(data.bioactive_profile as NutritionProfile);
           }
         })
-        .catch(() => {
+        .then(undefined, () => {
           // On network/RLS error treat as incomplete; quiz is idempotent
           set({ onboardingCompleted: false, onboardingChecked: true });
         });
