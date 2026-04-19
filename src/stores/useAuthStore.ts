@@ -1,5 +1,6 @@
 import { makeRedirectUri } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
+import { Platform } from 'react-native';
 import { create } from 'zustand';
 
 import { supabase } from '@/lib/supabase';
@@ -36,7 +37,12 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
   // Listen to auth state changes for session persistence between restarts.
   // Keep callback synchronous — fire profile fetch as a detached promise so
   // sessionChecked is set immediately and never blocks the splash screen.
-  supabase.auth.onAuthStateChange((_event, session) => {
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'TOKEN_REFRESH_FAILED') {
+      supabase.auth.signOut();
+      set({ user: null, sessionChecked: true, onboardingChecked: true });
+      return;
+    }
     if (session?.user) {
       const { id, email, created_at, user_metadata } = session.user;
 
@@ -124,9 +130,10 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => {
         const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
 
         // iOS: SFSafariViewController captures the redirect in-app and returns
-        // the full URL here. On Android this block is skipped (result.type === 'dismiss')
-        // because the OS delivers the deep link as a navigation intent to (auth)/callback.
-        if (result.type === 'success') {
+        // the full URL here. On Android the Custom Tab delivers the deep link as a
+        // navigation intent to (auth)/callback AND may also return type='success' —
+        // restrict the manual exchange to iOS only to avoid a double-exchange race.
+        if (result.type === 'success' && Platform.OS === 'ios') {
           const queryIndex = result.url.indexOf('?');
           if (queryIndex !== -1) {
             const params = new URLSearchParams(result.url.substring(queryIndex + 1));
