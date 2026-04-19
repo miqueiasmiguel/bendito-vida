@@ -26,6 +26,25 @@ Ao pressionar "Entrar com Google", o app SHALL iniciar o fluxo OAuth abrindo o b
 - **WHEN** ocorre erro durante o fluxo OAuth (rede, credenciais inválidas)
 - **THEN** o app exibe mensagem de erro ao usuário e permite nova tentativa
 
+### Requirement: Troca de código PKCE por plataforma
+O exchange do código de autorização (`exchangeCodeForSession`) SHALL ocorrer em um único ponto por plataforma para evitar dupla tentativa que consome o code verifier PKCE:
+
+- **iOS**: `signInWithGoogle` faz o exchange via `result.url` retornado pelo `SFSafariViewController` (`openAuthSessionAsync` com `result.type === 'success'`).
+- **Android**: o Custom Tab entrega o deep link como intent ao SO e `openAuthSessionAsync` pode retornar `result.type === 'success'` simultaneamente. O exchange SHALL ser feito exclusivamente pelo route handler `src/app/auth/callback.tsx` via deep link. O branch `result.type === 'success'` em `signInWithGoogle` SHALL ser ignorado no Android (`Platform.OS === 'ios'` guard).
+
+> **Contexto:** sem o guard, ambos os caminhos correm em paralelo. O callback ganha a corrida, consome o verifier; o `signInWithGoogle` falha com "PKCE code verifier not found in storage".
+
+#### Scenario: Login funciona após logout no Android
+- **WHEN** o usuário faz logout e inicia um novo login com Google no Android
+- **THEN** o exchange ocorre apenas via `/auth/callback`, a sessão é estabelecida e o usuário é redirecionado para `/(tabs)/home` sem erro
+
+### Requirement: Polyfill WebCrypto para PKCE SHA-256
+O ambiente React Native não expõe `crypto.getRandomValues` nem `crypto.subtle`. O app SHALL instalar um polyfill em `src/lib/crypto-polyfill.ts` — importado como primeiro import em `src/app/_layout.tsx` — que liga essas APIs ao `expo-crypto`, garantindo que o Supabase use SHA-256 (e não `plain`) para o code challenge PKCE.
+
+#### Scenario: PKCE usa SHA-256
+- **WHEN** o fluxo OAuth é iniciado
+- **THEN** nenhum warning "WebCrypto API is not supported... defaulting to plain" aparece nos logs
+
 ### Requirement: Estado de loading durante OAuth
 A UI SHALL exibir indicador de carregamento enquanto o fluxo OAuth estiver em andamento, desabilitando o botão para evitar múltiplas requisições.
 
