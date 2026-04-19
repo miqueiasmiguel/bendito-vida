@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react-native';
 
+import type { NutrientTag } from '@/data/quiz-questions';
 import { useAuthStore } from '../useAuthStore';
 
 // Mock useQuizStore (imported by useAuthStore for profile hydration)
@@ -175,7 +176,7 @@ describe('useAuthStore', () => {
 
   describe('markOnboardingComplete', () => {
     const dummyProfile = {
-      topNutrients: ['fibra', 'proteina', 'ferro'],
+      topNutrients: ['fibra', 'proteina', 'ferro'] as NutrientTag[],
       suggestedIngredients: [],
     };
 

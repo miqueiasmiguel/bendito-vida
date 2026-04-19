@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { colors, radii, spacing, typography } from '@/theme';
 
@@ -9,6 +9,7 @@ export interface ButtonProps {
   onPress: () => void;
   disabled?: boolean;
   accessibilityLabel?: string;
+  leftIcon?: React.ReactNode;
 }
 
 export function Button({
@@ -17,6 +18,7 @@ export function Button({
   onPress,
   disabled = false,
   accessibilityLabel,
+  leftIcon,
 }: ButtonProps) {
   return (
     <TouchableOpacity
@@ -31,11 +33,17 @@ export function Button({
       accessibilityLabel={accessibilityLabel ?? label}
       activeOpacity={0.8}
     >
-      <Text
-        style={[styles.label, variant === 'primary' ? styles.labelPrimary : styles.labelSecondary]}
-      >
-        {label}
-      </Text>
+      <View style={styles.inner}>
+        {leftIcon ? <View style={styles.iconWrapper}>{leftIcon}</View> : null}
+        <Text
+          style={[
+            styles.label,
+            variant === 'primary' ? styles.labelPrimary : styles.labelSecondary,
+          ]}
+        >
+          {label}
+        </Text>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -49,6 +57,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     alignSelf: 'stretch',
+  },
+  inner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconWrapper: {
+    marginRight: spacing.sm,
   },
   primary: {
     backgroundColor: colors.accent[500],

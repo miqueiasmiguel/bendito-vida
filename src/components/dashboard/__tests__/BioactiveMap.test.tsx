@@ -46,6 +46,15 @@ const nonParaibanoIngredient: Ingredient = {
 
 const nutrients: NutrientTag[] = ['omega3', 'fibra', 'calcio'];
 
+beforeEach(() => {
+  jest.useFakeTimers();
+});
+
+afterEach(() => {
+  jest.runAllTimers();
+  jest.useRealTimers();
+});
+
 describe('BioactiveMap', () => {
   it('renders empty state when no nutrients provided', () => {
     const { getByText } = render(<BioactiveMap topNutrients={[]} recommendedIngredients={[]} />);

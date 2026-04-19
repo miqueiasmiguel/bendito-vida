@@ -73,10 +73,18 @@ describe('AuthCallbackScreen', () => {
       error: { message: 'PKCE error' },
     });
 
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
     render(<AuthCallbackScreen />);
 
     await waitFor(() => {
       expect(router.replace).toHaveBeenCalledWith('/');
     });
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      '[AuthCallback] exchangeCodeForSession error:',
+      'PKCE error',
+    );
+    consoleSpy.mockRestore();
   });
 });

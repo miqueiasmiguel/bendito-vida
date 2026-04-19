@@ -1,7 +1,7 @@
 import * as WebBrowser from 'expo-web-browser';
 import { router } from 'expo-router';
 import React, { useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -11,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Button } from '@/components/ui';
+import { Button, GoogleIcon } from '@/components/ui';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { colors, spacing, typography } from '@/theme';
 
@@ -118,7 +118,24 @@ export default function WelcomeScreen() {
             onPress={signInWithGoogle}
             disabled={isLoading}
             accessibilityLabel="Entrar com Google"
+            leftIcon={<GoogleIcon size={20} />}
           />
+
+          <Text style={styles.privacyNotice}>
+            Ao continuar, você concorda com nossa{' '}
+            <Text
+              style={styles.privacyLink}
+              onPress={() => {
+                Linking.openURL(
+                  'https://miqueiasmiguel.github.io/bendito-vida/privacy-policy.html',
+                ).catch(() => {});
+              }}
+              accessibilityRole="link"
+              accessibilityLabel="política de privacidade"
+            >
+              política de privacidade
+            </Text>
+          </Text>
 
           {isLoading ? (
             <ActivityIndicator
@@ -132,6 +149,8 @@ export default function WelcomeScreen() {
     </SafeAreaView>
   );
 }
+
+const WHITE_80 = `${colors.white}CC`;
 
 const styles = StyleSheet.create({
   loadingContainer: {
@@ -198,6 +217,16 @@ const styles = StyleSheet.create({
     color: colors.primary[700],
     minHeight: 44,
     paddingVertical: spacing.sm,
+    textDecorationLine: 'underline',
+  },
+  privacyNotice: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.fontSize.caption,
+    color: WHITE_80,
+    textAlign: 'center',
+  },
+  privacyLink: {
+    color: colors.white,
     textDecorationLine: 'underline',
   },
 });
