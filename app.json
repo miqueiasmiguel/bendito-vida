@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "bendito-vida",
+    "name": "Bendito Vida",
     "slug": "bendito-vida",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -16,13 +16,15 @@
         "foregroundImage": "./assets/images/icon.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.miqueiasmiguel.benditovida"
+      "package": "com.miqueiasmiguel.benditovida",
+      "versionCode": 1
     },
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      "./plugins/with-adi-registration",
       "expo-router",
       [
         "expo-splash-screen",

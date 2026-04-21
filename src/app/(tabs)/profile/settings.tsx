@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
   KeyboardAvoidingView,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -48,6 +49,12 @@ export default function SettingsScreen() {
   const handleSignOut = async () => {
     await signOut();
     router.replace('/');
+  };
+
+  const handleDeleteRequest = () => {
+    Linking.openURL('https://miqueiasmiguel.github.io/bendito-vida/delete-account.html').catch(
+      () => {},
+    );
   };
 
   return (
@@ -103,6 +110,16 @@ export default function SettingsScreen() {
 
           <View style={styles.signOutSection}>
             <Button variant="secondary" label="Sair da conta" onPress={handleSignOut} />
+          </View>
+
+          <View style={styles.deleteSection}>
+            <TouchableOpacity
+              onPress={handleDeleteRequest}
+              accessibilityRole="link"
+              accessibilityLabel="Solicitar exclusão de conta e dados"
+            >
+              <Text style={styles.deleteLink}>Solicitar exclusão de conta e dados</Text>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -184,5 +201,18 @@ const styles = StyleSheet.create({
   },
   signOutSection: {
     marginTop: spacing.xxl,
+  },
+  deleteSection: {
+    marginTop: spacing.lg,
+    alignItems: 'center',
+  },
+  deleteLink: {
+    fontFamily: typography.fontFamily.regular,
+    fontSize: typography.fontSize.caption,
+    color: colors.semantic.error,
+    textDecorationLine: 'underline',
+    paddingVertical: spacing.sm,
+    minHeight: 44,
+    textAlignVertical: 'center',
   },
 });
