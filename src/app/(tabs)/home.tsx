@@ -5,8 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BioactiveMap } from '@/components/dashboard/BioactiveMap';
 import { DailyTip } from '@/components/dashboard/DailyTip';
-import type { CheckinValues } from '@/components/dashboard/WeeklyCheckinCard';
-import { WeeklyCheckinCard } from '@/components/dashboard/WeeklyCheckinCard';
+import { SimulatorCtaCard } from '@/components/dashboard/SimulatorCtaCard';
+import { TodayStatusCard } from '@/components/dashboard/TodayStatusCard';
 import { INGREDIENTS } from '@/data/ingredients';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useProgressStore } from '@/stores/useProgressStore';
@@ -20,18 +20,10 @@ function getDailyTipIngredient() {
 export default function HomeScreen() {
   const user = useAuthStore((s) => s.user);
   const nutritionProfile = useQuizStore((s) => s.nutritionProfile);
-  const checkins = useProgressStore((s) => s.checkins);
-
-  const today = new Date().toLocaleDateString('en-CA');
-  const todayRaw = checkins.find((c) => c.date === today);
-  const existingCheckin: CheckinValues | undefined = todayRaw
-    ? {
-        energyScore: todayRaw.energy_score,
-        sleepScore: todayRaw.sleep_score,
-        focusScore: todayRaw.focus_score,
-      }
-    : undefined;
-
+  const todayCheckin = useProgressStore((s) => {
+    const today = new Date().toLocaleDateString('en-CA');
+    return s.checkins.find((c) => c.date === today);
+  });
   const topNutrients = nutritionProfile?.topNutrients ?? [];
   const recommendedIngredients = nutritionProfile?.suggestedIngredients ?? [];
   const dailyIngredient = getDailyTipIngredient();
@@ -46,7 +38,11 @@ export default function HomeScreen() {
         <Text style={styles.greeting} accessibilityRole="header">
           {user?.name ? `Olá, ${user.name.split(' ')[0]}!` : 'Olá!'}
         </Text>
-        <Text style={styles.subtitle}>Veja seu perfil nutricional de hoje.</Text>
+        <Text style={styles.subtitle}>Veja o que preparamos para você hoje.</Text>
+
+        <View style={styles.section}>
+          <SimulatorCtaCard onPress={() => router.push('/(tabs)/simulator')} />
+        </View>
 
         <View style={styles.section}>
           <BioactiveMap
@@ -58,11 +54,7 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.section}>
-          <WeeklyCheckinCard
-            compact
-            existingCheckin={existingCheckin}
-            onPress={() => router.push('/(tabs)/progress')}
-          />
+          <TodayStatusCard checkin={todayCheckin} onPress={() => router.push('/(tabs)/progress')} />
         </View>
 
         <View style={styles.section}>
